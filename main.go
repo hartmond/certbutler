@@ -1,16 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
-	"golang.org/x/crypto/ocsp"
+
+	"felix-hartmond.de/projects/certbutler/acme"
+	"felix-hartmond.de/projects/certbutler/ocsp"
 )
 
 func main() {
+	acme.Test()
+	//ocspTest()
+}
+
+func ocspTest() {
 	certfile := "example.com"
 
-	ocspResponse, ocspResponseRaw, err := getOcspResponse(certfile)
+	ocspResponse, ocspResponseRaw, err := ocsp.GetOcspResponse(certfile)
 	if err != nil {
 		panic(err)
 	}
@@ -20,15 +26,5 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("ProducedAt: ", ocspResponse.ProducedAt)
-	fmt.Println("ThisUpdate: ", ocspResponse.ThisUpdate)
-	fmt.Println("NextUpdate: ", ocspResponse.NextUpdate)
-	switch ocspResponse.Status {
-	case ocsp.Good:
-		fmt.Println("Status: Good")
-	case ocsp.Revoked:
-		fmt.Printf("Status: Revoked (At: %)", ocspResponse.RevokedAt)
-	case ocsp.Unknown:
-		fmt.Println("Status: Unknown")
-	}
+	ocsp.PrintStatus(ocspResponse)
 }

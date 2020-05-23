@@ -1,16 +1,17 @@
-package main
+package ocsp
 
 import (
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"golang.org/x/crypto/ocsp"
 )
 
-func getOcspResponse(certfile string) (*ocsp.Response, []byte, error) {
+func GetOcspResponse(certfile string) (*ocsp.Response, []byte, error) {
 	cert, err := loadPemCertificate(certfile + ".pem")
 	if err != nil {
 		return nil, nil, err
@@ -44,6 +45,20 @@ func getOcspResponse(certfile string) (*ocsp.Response, []byte, error) {
 	}
 
 	return ocspResponse, ocspResponseRaw, nil
+}
+
+func PrintStatus(ocspResponse *ocsp.Response) {
+	fmt.Println("ProducedAt: ", ocspResponse.ProducedAt)
+	fmt.Println("ThisUpdate: ", ocspResponse.ThisUpdate)
+	fmt.Println("NextUpdate: ", ocspResponse.NextUpdate)
+	switch ocspResponse.Status {
+	case ocsp.Good:
+		fmt.Println("Status: Good")
+	case ocsp.Revoked:
+		fmt.Printf("Status: Revoked (At: %)", ocspResponse.RevokedAt)
+	case ocsp.Unknown:
+		fmt.Println("Status: Unknown")
+	}
 }
 
 func loadPemCertificate(filename string) (*x509.Certificate, error) {
