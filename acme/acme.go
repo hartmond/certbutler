@@ -57,10 +57,16 @@ func Test() {
 		client.GetReg(ctx, "")
 	}
 
+	fmt.Println("Sending AuthorizeOrder Request")
+
 	order, err := client.AuthorizeOrder(ctx, acme.DomainIDs(dnsNames...))
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("Autorizing Domains")
+
+	pendigChallenges := []*acme.Challenge{}
 
 	for _, authURL := range order.AuthzURLs {
 		authz, err := client.GetAuthorization(ctx, authURL)
@@ -69,6 +75,7 @@ func Test() {
 		}
 
 		if authz.Status == acme.StatusValid {
+			fmt.Println(authz.Identifier.Value + " alredy autorized")
 			// Already authorized.
 			continue
 		}
@@ -89,15 +96,20 @@ func Test() {
 			log.Fatalf("dns-01 token for %q: %v", authz.Identifier, err)
 		}
 
-		fmt.Println("=> ", authz.Identifier, val)
+		fmt.Printf("hosting dns challenge for %s: %s\n", authz.Identifier, val)
 
 		addDNSToken(val)
+		pendigChallenges = append(pendigChallenges, chal)
+	}
 
+	fmt.Println("Accepting pendig challanges")
+	for _, chal := range pendigChallenges {
 		if _, err := client.Accept(ctx, chal); err != nil {
-			log.Fatalf("dns-01 accept for %q: %v", authz.Identifier, err)
+			log.Fatalf("dns-01 accept for %q: %v", chal, err)
 		}
 	}
 
+	fmt.Println("Waiting for authorizations...")
 	for _, authURL := range order.AuthzURLs {
 		if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
 			log.Fatalf("authorization for %q failed: %v", authURL, err)
@@ -106,33 +118,75 @@ func Test() {
 
 	clearDNSTokens()
 
-	/*
-		// All authorizations are granted. Request the certificate.
-		key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	fmt.Println("Generating PrivateKey and CSR")
+
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+
+	keyBytes, err := x509.MarshalECPrivateKey(key)
+	if err != nil {
+		panic(err)
+	}
+	savePEM("PRIVATE KEY", "cert.pem", keyBytes, false)
+	if err != nil {
+		panic(err)
+	}
+
+	req := &x509.CertificateRequest{
+		DNSNames: dnsNames,
+	}
+	csr, err := x509.CreateCertificateRequest(rand.Reader, req, key)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Requesting Certificate")
+
+	crt, _, err := client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
+	if err != nil {
+		panic(err)
+	}
+
+	savePEM("CERTIFICATE", "cert.pem", crt[0], true)
+	if err != nil {
+		panic(err)
+	}
+
+	first := true
+	for _, cert := range crt[1:] {
+		savePEM("CERTIFICATE", "cert.pem.issue", cert, !first)
 		if err != nil {
 			panic(err)
 		}
+		first = false
+	}
+}
 
-		req := &x509.CertificateRequest{
-			DNSNames: dnsnames,
-		}
-		csr, err := x509.CreateCertificateRequest(rand.Reader, req, key)
-		if err != nil {
-			panic(err)
-		}
-	*/
+func savePEM(dataType, filename string, data []byte, append bool) error {
+	flags := os.O_CREATE | os.O_WRONLY
+	if append {
+		flags |= os.O_APPEND
+	} else {
+		flags |= os.O_TRUNC
+	}
+	file, err := os.OpenFile(filename, flags, 0600)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
-	/*
-		crt, _, err := client.CreateCert(ctx, csr, 24*time.Hour, true)
-		if err != nil {
-			panic(err)
-		}
+	pemBlock := &pem.Block{
+		Type:  dataType,
+		Bytes: data,
+	}
+	err = pem.Encode(file, pemBlock)
+	if err != nil {
+		panic(err)
 
-		fmt.Println(crt)
-	*/
-
-	// TODO: Store cert key and crt ether as is, in DER format, or convert to PEM.
-
+	}
+	return nil
 }
 
 func createKeyFile(filename string) (*ecdsa.PrivateKey, error) {
@@ -146,18 +200,7 @@ func createKeyFile(filename string) (*ecdsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	pemPrivateBlock := &pem.Block{
-		Type:  "ACME ACCOUNT ECDSA PRIVATE KEY",
-		Bytes: marshalledKey,
-	}
-
-	pemPrivateFile, err := os.Create(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer pemPrivateFile.Close()
-
-	err = pem.Encode(pemPrivateFile, pemPrivateBlock)
+	savePEM("ACME ACCOUNT PRIVATE KEY", filename, marshalledKey, false)
 	if err != nil {
 		return nil, err
 	}
