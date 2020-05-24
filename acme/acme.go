@@ -62,8 +62,6 @@ func Test() {
 		panic(err)
 	}
 
-	fmt.Println(order)
-
 	for _, authURL := range order.AuthzURLs {
 		authz, err := client.GetAuthorization(ctx, authURL)
 		if err != nil {
@@ -93,19 +91,20 @@ func Test() {
 
 		fmt.Println("=> ", authz.Identifier, val)
 
-		// TODO manage DNS server to startup and host needed record
+		addDNSToken(val)
 
 		if _, err := client.Accept(ctx, chal); err != nil {
 			log.Fatalf("dns-01 accept for %q: %v", authz.Identifier, err)
 		}
-
-		/*
-			// TODO Wait for the CA to validate; maybe move outside loop to do parallel validation
-			if _, err := client.WaitAuthorization(ctx, authz.URL); err != nil {
-				log.Fatalf("authorization for %q failed: %v", domain, err)
-			}
-		*/
 	}
+
+	for _, authURL := range order.AuthzURLs {
+		if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
+			log.Fatalf("authorization for %q failed: %v", authURL, err)
+		}
+	}
+
+	clearDNSTokens()
 
 	/*
 		// All authorizations are granted. Request the certificate.
@@ -148,7 +147,7 @@ func createKeyFile(filename string) (*ecdsa.PrivateKey, error) {
 	}
 
 	pemPrivateBlock := &pem.Block{
-		Type:  "ECDSA PRIVATE KEY",
+		Type:  "ACME ACCOUNT ECDSA PRIVATE KEY",
 		Bytes: marshalledKey,
 	}
 
