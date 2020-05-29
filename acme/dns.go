@@ -20,7 +20,7 @@ func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	if r.Opcode == dns.OpcodeQuery {
 		for _, q := range m.Question {
 			for _, record := range records {
-				rr, err := dns.NewRR(fmt.Sprintf("%s TXT %s", q.Name, record))
+				rr, err := dns.NewRR(fmt.Sprintf("%s 0 IN TXT %s", q.Name, record))
 				if err == nil {
 					m.Answer = append(m.Answer, rr)
 				}
