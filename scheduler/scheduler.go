@@ -10,7 +10,7 @@ import (
 type ConfigSet []Config
 
 type Config struct {
-	CertFileBase string
+	CertFile string
 
 	DnsNames        []string
 	MustStaple      bool
@@ -54,7 +54,7 @@ func process(config Config) {
 	// run required steps dependent on certificate/ocsp file status and configuration
 
 	// cert request without prior check for deveoplment - TODO remove
-	err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.CertFileBase, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
+	err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.CertFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 	if err != nil {
 		// request failed - TODO handle
 		panic(err)

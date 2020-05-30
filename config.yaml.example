@@ -1,4 +1,4 @@
-- certfilebase: example.com
+- certfile: example.com.pem
   dnsnames:
   - example.com
   - '*.example.com'
