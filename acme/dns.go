@@ -2,17 +2,17 @@ package acme
 
 import (
 	"fmt"
-	"log"
+	"sync"
 
 	"github.com/miekg/dns"
 )
 
 var (
 	records = []string{}
-	server  *dns.Server
+	mux     sync.Mutex
 )
 
-func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
+func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Compress = false
@@ -31,27 +31,21 @@ func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func addDNSToken(token string) {
-	records = append(records, token)
-	go startServer()
-}
+func hostDNS(tokens []string) chan bool {
+	mux.Lock()
 
-func clearDNSTokens() {
-	if server != nil {
-		records = []string{}
+	records = tokens
+	done := make(chan bool)
+
+	dns.HandleFunc(".", handleDNSRequest)
+	server := &dns.Server{Addr: ":53", Net: "udp"}
+
+	go func() {
+		<-done
 		server.Shutdown()
-	}
-}
+		mux.Unlock()
+	}()
 
-func startServer() {
-	if server != nil {
-		return
-	}
-	dns.HandleFunc(".", handleDnsRequest)
-	server = &dns.Server{Addr: ":53", Net: "udp"}
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Fatalf("Failed to start server: %s\n ", err.Error())
-	}
-	server = nil
+	go server.ListenAndServe() // TODO somehow catch error when startup fails
+	return done
 }

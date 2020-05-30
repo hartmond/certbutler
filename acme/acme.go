@@ -67,6 +67,7 @@ func Test() {
 	fmt.Println("Autorizing Domains")
 
 	pendigChallenges := []*acme.Challenge{}
+	dnsTokens := []string{}
 
 	for _, authURL := range order.AuthzURLs {
 		authz, err := client.GetAuthorization(ctx, authURL)
@@ -98,25 +99,31 @@ func Test() {
 
 		fmt.Printf("hosting dns challenge for %s: %s\n", authz.Identifier, val)
 
-		addDNSToken(val)
+		dnsTokens = append(dnsTokens, val)
 		pendigChallenges = append(pendigChallenges, chal)
 	}
 
-	fmt.Println("Accepting pendig challanges")
-	for _, chal := range pendigChallenges {
-		if _, err := client.Accept(ctx, chal); err != nil {
-			log.Fatalf("dns-01 accept for %q: %v", chal, err)
-		}
-	}
+	if len(pendigChallenges) > 0 {
+		// Preparing authorizsations - Start DNS server
+		closeServer := hostDNS(dnsTokens)
 
-	fmt.Println("Waiting for authorizations...")
-	for _, authURL := range order.AuthzURLs {
-		if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
-			log.Fatalf("authorization for %q failed: %v", authURL, err)
+		fmt.Println("Accepting pendig challanges")
+		for _, chal := range pendigChallenges {
+			if _, err := client.Accept(ctx, chal); err != nil {
+				log.Fatalf("dns-01 accept for %q: %v", chal, err)
+			}
 		}
-	}
 
-	clearDNSTokens()
+		fmt.Println("Waiting for authorizations...")
+		for _, authURL := range order.AuthzURLs {
+			if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
+				log.Fatalf("authorization for %q failed: %v", authURL, err)
+			}
+		}
+
+		// Authorizations done - Stop DNS server
+		closeServer <- true
+	}
 
 	fmt.Println("Generating PrivateKey and CSR")
 
