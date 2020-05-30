@@ -1,41 +1,30 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
-	"felix-hartmond.de/projects/certbutler/acme"
-	"felix-hartmond.de/projects/certbutler/ocsp"
-)
-
-const (
-	accountFile       = "acmeKey.pem"
-	certFileBase      = "example.com" // cert will be safed as cerFileBase.pem; chain as certFileBase.pem.issue
-	acmeDirectory     = "https://acme-staging-v02.api.letsencrypt.org/directory"
-	regsiterIfMissing = true
+	"felix-hartmond.de/projects/certbutler/scheduler"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	dnsNames := []string{"example.com", "*.example.com"}
-	err := acme.RequestCertificate(dnsNames, accountFile, certFileBase, acmeDirectory, regsiterIfMissing)
-	if err != nil {
-		panic(err)
+	if len(os.Args) < 2 || os.Args[1] == "" {
+		fmt.Printf("Usage: cerbutler <configfile>\n")
+		os.Exit(1)
 	}
-	//ocspTest()
-}
 
-func ocspTest() {
-	certfile := "example.com"
-
-	ocspResponse, ocspResponseRaw, err := ocsp.GetOcspResponse(certfile)
+	yamlBytes, err := ioutil.ReadFile(os.Args[1])
 	if err != nil {
 		panic(err)
 	}
 
-	err = ioutil.WriteFile(certfile+".pem.ocsp", ocspResponseRaw, os.FileMode(int(0777)))
+	configSet := scheduler.ConfigSet{}
+	err = yaml.Unmarshal(yamlBytes, &configSet)
 	if err != nil {
 		panic(err)
 	}
 
-	ocsp.PrintStatus(ocspResponse)
+	scheduler.RunConfig(configSet)
 }

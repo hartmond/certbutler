@@ -1,0 +1,11 @@
+- certfilebase: example.com
+  dnsnames:
+  - example.com
+  - '*.example.com'
+  muststaple: false
+  acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
+  acmeaccountfile: acmeKey.pem
+  regsiteracme: true
+  updatecert: true
+  updateocsp: false
+  runinteralminutes: 0

@@ -39,7 +39,7 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 	return client, err
 }
 
-func RequestCertificate(dnsNames []string, accountFile string, certFileBase string, acmeDirectory string, registerIfMissing bool) error {
+func RequestCertificate(dnsNames []string, accountFile string, certFileBase string, mustStaple bool, acmeDirectory string, registerIfMissing bool) error {
 	ctx := context.Background()
 	var client *acme.Client
 	var err error
@@ -139,6 +139,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFileBase stri
 		return err
 	}
 
+	// TODO add must staple if requested
 	req := &x509.CertificateRequest{
 		DNSNames: dnsNames,
 	}
@@ -177,6 +178,7 @@ func savePEM(dataType, filename string, data []byte, append bool) error {
 		flags |= os.O_APPEND
 	} else {
 		flags |= os.O_TRUNC
+		// TODO if file exists; rename old file to archive it
 	}
 	file, err := os.OpenFile(filename, flags, 0600)
 	if err != nil {
