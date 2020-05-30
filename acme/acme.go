@@ -7,7 +7,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"log"
 	"os"
 
 	"crypto/x509"
@@ -16,52 +15,51 @@ import (
 	"golang.org/x/crypto/acme"
 )
 
-const (
-	acmeKeyFile = "acmeKey.pem"
-	register    = false
-)
+func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) (*acme.Client, error) {
+	akey, err := loadKeyFile(accountFile)
+	if err != nil {
+		return nil, err
+	}
 
-var (
-	dnsNames = []string{}
-)
+	client := &acme.Client{Key: akey, DirectoryURL: acmeDirectory}
+	_, err = client.GetReg(ctx, "")
 
-func Test() {
+	return client, err
+}
+
+func registerAccount(ctx context.Context, accountFile string, acmeDirectory string) (*acme.Client, error) {
+	akey, err := createAcmeAccountFile(accountFile)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &acme.Client{Key: akey, DirectoryURL: acmeDirectory}
+	_, err = client.Register(ctx, &acme.Account{}, acme.AcceptTOS)
+
+	return client, err
+}
+
+func RequestCertificate(dnsNames []string, accountFile string, certFileBase string, acmeDirectory string, registerIfMissing bool) error {
 	ctx := context.Background()
-	_ = ctx
-
 	var client *acme.Client
+	var err error
 
-	if register {
-		// == REGISTER ==
-		akey, err := createKeyFile(acmeKeyFile)
-		if err != nil {
-			panic(err)
+	client, err = loadAccount(ctx, accountFile, acmeDirectory)
+	if err != nil {
+		if !registerIfMissing {
+			return err
 		}
-
-		client = &acme.Client{Key: akey, DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory"}
-
-		_, err = client.Register(ctx, &acme.Account{}, acme.AcceptTOS)
+		client, err = registerAccount(ctx, accountFile, acmeDirectory)
 		if err != nil {
-			panic(err)
+			return err
 		}
-
-	} else {
-		// == LOGIN ==
-		akey, err := loadKeyFile(acmeKeyFile)
-		if err != nil {
-			panic(err)
-		}
-
-		client = &acme.Client{Key: akey, DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory"}
-
-		client.GetReg(ctx, "")
 	}
 
 	fmt.Println("Sending AuthorizeOrder Request")
 
 	order, err := client.AuthorizeOrder(ctx, acme.DomainIDs(dnsNames...))
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fmt.Println("Autorizing Domains")
@@ -72,7 +70,7 @@ func Test() {
 	for _, authURL := range order.AuthzURLs {
 		authz, err := client.GetAuthorization(ctx, authURL)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		if authz.Status == acme.StatusValid {
@@ -89,12 +87,12 @@ func Test() {
 			}
 		}
 		if chal == nil {
-			log.Fatalf("no dns-01 challenge for %q", authURL)
+			return fmt.Errorf("no dns-01 challenge for %q", authURL)
 		}
 
 		val, err := client.DNS01ChallengeRecord(chal.Token)
 		if err != nil {
-			log.Fatalf("dns-01 token for %q: %v", authz.Identifier, err)
+			return fmt.Errorf("dns-01 token for %q: %v", authz.Identifier, err)
 		}
 
 		fmt.Printf("hosting dns challenge for %s: %s\n", authz.Identifier, val)
@@ -110,14 +108,14 @@ func Test() {
 		fmt.Println("Accepting pendig challanges")
 		for _, chal := range pendigChallenges {
 			if _, err := client.Accept(ctx, chal); err != nil {
-				log.Fatalf("dns-01 accept for %q: %v", chal, err)
+				return fmt.Errorf("dns-01 accept for %q: %v", chal, err)
 			}
 		}
 
 		fmt.Println("Waiting for authorizations...")
 		for _, authURL := range order.AuthzURLs {
 			if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
-				log.Fatalf("authorization for %q failed: %v", authURL, err)
+				return fmt.Errorf("authorization for %q failed: %v", authURL, err)
 			}
 		}
 
@@ -129,16 +127,16 @@ func Test() {
 
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	keyBytes, err := x509.MarshalECPrivateKey(key)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	savePEM("PRIVATE KEY", "cert.pem", keyBytes, false)
+	savePEM("PRIVATE KEY", certFileBase+".pem", keyBytes, false)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	req := &x509.CertificateRequest{
@@ -146,29 +144,31 @@ func Test() {
 	}
 	csr, err := x509.CreateCertificateRequest(rand.Reader, req, key)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fmt.Println("Requesting Certificate")
 
 	crt, _, err := client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	savePEM("CERTIFICATE", "cert.pem", crt[0], true)
+	savePEM("CERTIFICATE", certFileBase+".pem", crt[0], true)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	first := true
 	for _, cert := range crt[1:] {
-		savePEM("CERTIFICATE", "cert.pem.issue", cert, !first)
+		savePEM("CERTIFICATE", certFileBase+".pem.issue", cert, !first)
 		if err != nil {
-			panic(err)
+			return err
 		}
 		first = false
 	}
+
+	return nil
 }
 
 func savePEM(dataType, filename string, data []byte, append bool) error {
@@ -180,7 +180,7 @@ func savePEM(dataType, filename string, data []byte, append bool) error {
 	}
 	file, err := os.OpenFile(filename, flags, 0600)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
@@ -190,13 +190,13 @@ func savePEM(dataType, filename string, data []byte, append bool) error {
 	}
 	err = pem.Encode(file, pemBlock)
 	if err != nil {
-		panic(err)
+		return err
 
 	}
 	return nil
 }
 
-func createKeyFile(filename string) (*ecdsa.PrivateKey, error) {
+func createAcmeAccountFile(filename string) (*ecdsa.PrivateKey, error) {
 	akey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, err

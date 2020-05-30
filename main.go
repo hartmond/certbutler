@@ -8,8 +8,19 @@ import (
 	"felix-hartmond.de/projects/certbutler/ocsp"
 )
 
+const (
+	accountFile       = "acmeKey.pem"
+	certFileBase      = "example.com" // cert will be safed as cerFileBase.pem; chain as certFileBase.pem.issue
+	acmeDirectory     = "https://acme-staging-v02.api.letsencrypt.org/directory"
+	regsiterIfMissing = true
+)
+
 func main() {
-	acme.Test()
+	dnsNames := []string{"example.com", "*.example.com"}
+	err := acme.RequestCertificate(dnsNames, accountFile, certFileBase, acmeDirectory, regsiterIfMissing)
+	if err != nil {
+		panic(err)
+	}
 	//ocspTest()
 }
 
