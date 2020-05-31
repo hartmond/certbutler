@@ -2,49 +2,55 @@ package ocsp
 
 import (
 	"bytes"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"felix-hartmond.de/projects/certbutler/common"
 
 	"golang.org/x/crypto/ocsp"
 )
 
-func GetOcspResponse(certfile string) (*ocsp.Response, []byte, error) {
-	cert, err := loadPemCertificate(certfile + ".pem")
+func GetOcspResponse(certfile string) (*ocsp.Response, error) {
+	cert, err := common.LoadCertFromPEMFile(certfile, 0)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	issueCert, err := loadPemCertificate(certfile + ".pem.issue")
+	issueCert, err := common.LoadCertFromPEMFile(certfile, 1)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ocspRequest, err := ocsp.CreateRequest(cert, issueCert, nil)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	httpResponse, err := http.Post(cert.OCSPServer[0], "application/ocsp-request", bytes.NewBuffer(ocspRequest))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	defer httpResponse.Body.Close()
 
 	ocspResponseRaw, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ocspResponse, err := ocsp.ParseResponse(ocspResponseRaw, issueCert)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return ocspResponse, ocspResponseRaw, nil
+	err = ioutil.WriteFile(certfile+".ocsp", ocspResponseRaw, os.FileMode(int(0600)))
+	if err != nil {
+		return nil, err
+	}
+
+	return ocspResponse, nil
 }
 
 func PrintStatus(ocspResponse *ocsp.Response) {
@@ -59,13 +65,4 @@ func PrintStatus(ocspResponse *ocsp.Response) {
 	case ocsp.Unknown:
 		fmt.Println("Status: Unknown")
 	}
-}
-
-func loadPemCertificate(filename string) (*x509.Certificate, error) {
-	certBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	pemBlock, _ := pem.Decode(certBytes)
-	return x509.ParseCertificate(pemBlock.Bytes)
 }

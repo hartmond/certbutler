@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"felix-hartmond.de/projects/certbutler/acme"
+	"felix-hartmond.de/projects/certbutler/ocsp"
 )
 
 type ConfigSet []Config
@@ -59,4 +60,12 @@ func process(config Config) {
 		// request failed - TODO handle
 		panic(err)
 	}
+
+	// ocsp request without prior check for deveoplment - TODO remove
+	ocspResponse, err := ocsp.GetOcspResponse(config.CertFile)
+	if err != nil {
+		panic(err)
+	}
+	ocsp.PrintStatus(ocspResponse)
+
 }

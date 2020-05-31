@@ -1,22 +1,20 @@
 package acme
 
 import (
-	"bufio"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"os"
 
 	"crypto/x509"
-	"encoding/pem"
 
+	"felix-hartmond.de/projects/certbutler/common"
 	"golang.org/x/crypto/acme"
 )
 
 func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) (*acme.Client, error) {
-	akey, err := loadKeyFile(accountFile)
+	akey, err := common.LoadKeyFromPEMFile(accountFile, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -28,15 +26,22 @@ func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) 
 }
 
 func registerAccount(ctx context.Context, accountFile string, acmeDirectory string) (*acme.Client, error) {
-	akey, err := createAcmeAccountFile(accountFile)
+	akey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &acme.Client{Key: akey, DirectoryURL: acmeDirectory}
 	_, err = client.Register(ctx, &acme.Account{}, acme.AcceptTOS)
+	if err != nil {
+		return nil, err
+	}
 
-	return client, err
+	err = common.SaveToPEMFile(accountFile, akey, nil)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func RequestCertificate(dnsNames []string, accountFile string, certFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) error {
@@ -130,11 +135,6 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 		return err
 	}
 
-	keyBytes, err := x509.MarshalECPrivateKey(key)
-	if err != nil {
-		return err
-	}
-
 	// TODO add must staple if requested
 	req := &x509.CertificateRequest{
 		DNSNames: dnsNames,
@@ -146,87 +146,17 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 
 	fmt.Println("Requesting Certificate")
 
-	crt, _, err := client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
+	crts, _, err := client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("Saving Certificate")
 
-	savePEM("EC PRIVATE KEY", certFile, keyBytes, false)
+	err = common.SaveToPEMFile(certFile, key, crts)
 	if err != nil {
 		return err
-	}
-
-	for _, cert := range crt {
-		savePEM("CERTIFICATE", certFile, cert, true)
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
-}
-
-func savePEM(dataType, filename string, data []byte, append bool) error {
-	flags := os.O_CREATE | os.O_WRONLY
-	if append {
-		flags |= os.O_APPEND
-	} else {
-		flags |= os.O_TRUNC
-		// TODO if file exists; rename old file to archive it
-	}
-	file, err := os.OpenFile(filename, flags, 0600)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	pemBlock := &pem.Block{
-		Type:  dataType,
-		Bytes: data,
-	}
-	err = pem.Encode(file, pemBlock)
-	if err != nil {
-		return err
-
-	}
-	return nil
-}
-
-func createAcmeAccountFile(filename string) (*ecdsa.PrivateKey, error) {
-	akey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	marshalledKey, err := x509.MarshalECPrivateKey(akey)
-	if err != nil {
-		return nil, err
-	}
-
-	savePEM("ACME ACCOUNT PRIVATE KEY", filename, marshalledKey, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return akey, nil
-}
-
-func loadKeyFile(filename string) (*ecdsa.PrivateKey, error) {
-	privateKeyFile, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	pemfileinfo, _ := privateKeyFile.Stat()
-	var size int64 = pemfileinfo.Size()
-	pembytes := make([]byte, size)
-	buffer := bufio.NewReader(privateKeyFile)
-	_, err = buffer.Read(pembytes)
-	data, _ := pem.Decode([]byte(pembytes))
-	privateKeyFile.Close()
-
-	privateKeyImported, err := x509.ParseECPrivateKey(data.Bytes)
-	return privateKeyImported, err
 }
