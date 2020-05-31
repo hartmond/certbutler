@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -35,21 +36,50 @@ func RunConfig(configs []common.Config) {
 }
 
 func process(config common.Config) {
-	// TODO real check of certificate + ocsp fiele
-	// run required steps dependent on certificate/ocsp file status and configuration
+	renewCert, renewOCSP := getOpenTasks(config)
 
-	// cert request without prior check for deveoplment - TODO remove
-	err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.CertFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
-	if err != nil {
-		// request failed - TODO handle
-		panic(err)
+	fmt.Printf("%s starting run (cert: %t ocsp: %t)\n", time.Now(), renewCert, renewOCSP)
+
+	if config.UpdateCert && renewCert {
+		err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.CertFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
+		if err != nil {
+			// request failed - TODO handle
+			panic(err)
+		}
 	}
 
-	// ocsp request without prior check for deveoplment - TODO remove
-	ocspResponse, err := ocsp.GetOcspResponse(config.CertFile)
-	if err != nil {
-		panic(err)
+	if config.UpdateOCSP && renewOCSP {
+		ocspResponse, err := ocsp.GetOcspResponse(config.CertFile)
+		if err != nil {
+			panic(err)
+		}
+		ocsp.PrintStatus(ocspResponse)
 	}
-	ocsp.PrintStatus(ocspResponse)
+}
 
+func getOpenTasks(config common.Config) (renewCert, renewOCSP bool) {
+	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
+	if err != nil {
+		// no or invalid certificate => request cert
+		return true, true
+	}
+
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(14*24)*time.Hour {
+		// cert will expire soon (in 2 weeks) => renwew cert
+		return true, true
+	}
+
+	ocsp, err := ocsp.LoadFromFile(config.CertFile)
+	if err != nil {
+		// cert ok but ocsp missing or not valid => renew ocsp
+		return false, true
+	}
+
+	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
+		// cert ok but ocsp expires soon (in 3 days) => renew ocsp
+		return false, true
+	}
+
+	// everythings fine => noting to do
+	return false, false
 }

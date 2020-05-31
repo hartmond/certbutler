@@ -66,3 +66,17 @@ func PrintStatus(ocspResponse *ocsp.Response) {
 		fmt.Println("Status: Unknown")
 	}
 }
+
+func LoadFromFile(certfile string) (*ocsp.Response, error) {
+	rawOCSPBytes, err := ioutil.ReadFile(certfile + ".ocsp")
+	if err != nil {
+		return nil, err
+	}
+
+	issueCert, err := common.LoadCertFromPEMFile(certfile, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	return ocsp.ParseResponse(rawOCSPBytes, issueCert)
+}
