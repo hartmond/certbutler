@@ -5,26 +5,31 @@ import (
 	"io/ioutil"
 	"os"
 
+	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/scheduler"
 	"gopkg.in/yaml.v3"
 )
 
 func main() {
-	if len(os.Args) < 2 || os.Args[1] == "" {
-		fmt.Printf("Usage: cerbutler <configfile>\n")
+	if len(os.Args) < 2 {
+		fmt.Printf("Usage: cerbutler <configfile> <configfile> ...\n")
 		os.Exit(1)
 	}
 
-	yamlBytes, err := ioutil.ReadFile(os.Args[1])
-	if err != nil {
-		panic(err)
+	configs := []common.Config{}
+	for _, filename := range os.Args[1:] {
+		yamlBytes, err := ioutil.ReadFile(filename)
+		if err != nil {
+			panic(err)
+		}
+
+		var config common.Config
+		err = yaml.Unmarshal(yamlBytes, &config)
+		if err != nil {
+			panic(err)
+		}
+		configs = append(configs, config)
 	}
 
-	configSet := scheduler.ConfigSet{}
-	err = yaml.Unmarshal(yamlBytes, &configSet)
-	if err != nil {
-		panic(err)
-	}
-
-	scheduler.RunConfig(configSet)
+	scheduler.RunConfig(configs)
 }

@@ -9,6 +9,21 @@ import (
 	"os"
 )
 
+type Config struct {
+	CertFile string
+
+	DnsNames        []string
+	MustStaple      bool
+	AcmeDirectory   string
+	AcmeAccountFile string
+	RegsiterAcme    bool
+
+	UpdateCert bool
+	UpdateOCSP bool
+
+	RunInteralMinutes int
+}
+
 const (
 	pemTypeKey  = "EC PRIVATE KEY"
 	pemTypeCert = "CERTIFICATE"

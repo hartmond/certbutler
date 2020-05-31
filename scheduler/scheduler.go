@@ -5,31 +5,15 @@ import (
 	"time"
 
 	"felix-hartmond.de/projects/certbutler/acme"
+	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/ocsp"
 )
 
-type ConfigSet []Config
-
-type Config struct {
-	CertFile string
-
-	DnsNames        []string
-	MustStaple      bool
-	AcmeDirectory   string
-	AcmeAccountFile string
-	RegsiterAcme    bool
-
-	UpdateCert bool
-	UpdateOCSP bool
-
-	RunInteralMinutes int
-}
-
 // RunConfig starts cerbutler tasked based on a configuration
-func RunConfig(configSet ConfigSet) {
+func RunConfig(configs []common.Config) {
 	wg := &sync.WaitGroup{}
 
-	for _, config := range configSet {
+	for _, config := range configs {
 		if config.RunInteralMinutes == 0 {
 			wg.Add(1)
 			go func() {
@@ -39,7 +23,7 @@ func RunConfig(configSet ConfigSet) {
 		} else {
 			ticker := time.NewTicker(time.Duration(config.RunInteralMinutes) * time.Minute)
 			wg.Add(1) // this will never be set to done -> runs indefinitely
-			go func(waitChannel <-chan time.Time, config Config) {
+			go func(waitChannel <-chan time.Time, config common.Config) {
 				for {
 					process(config)
 					<-waitChannel
@@ -50,7 +34,7 @@ func RunConfig(configSet ConfigSet) {
 	wg.Wait()
 }
 
-func process(config Config) {
+func process(config common.Config) {
 	// TODO real check of certificate + ocsp fiele
 	// run required steps dependent on certificate/ocsp file status and configuration
 
