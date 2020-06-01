@@ -18,8 +18,9 @@ type Config struct {
 	AcmeAccountFile string
 	RegsiterAcme    bool
 
-	UpdateCert bool
-	UpdateOCSP bool
+	UpdateCert    bool
+	UpdateOCSP    bool
+	HAProxySocket string
 
 	RunInteralMinutes int
 }

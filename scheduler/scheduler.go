@@ -55,31 +55,66 @@ func process(config common.Config) {
 		}
 		ocsp.PrintStatus(ocspResponse)
 	}
+
+	if config.HAProxySocket != "" {
+		// TODO make cert, key, ocspResponse available for calling
+		if renewCert && renewOCSP {
+			// TODO haproxy.UpdateHAProxy(config.HAProxySocket, cert, key, ocspResponse)
+		} else if renewCert {
+			// TODO haproxy.UpdateHAProxy(config.HAProxySocket, cert, key, nil)
+		} else if renewOCSP {
+			// TODO haproxy.UpdateHAProxy(config.HAProxySocket, nil, nil, ocspResponse)
+		}
+	}
 }
 
 func getOpenTasks(config common.Config) (renewCert, renewOCSP bool) {
-	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
-	if err != nil {
-		// no or invalid certificate => request cert
-		return true, true
+	if checkCertRenew(config) {
+		return true, config.UpdateOCSP
 	}
 
-	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(14*24)*time.Hour {
-		// cert will expire soon (in 2 weeks) => renwew cert
-		return true, true
-	}
-
-	ocsp, err := ocsp.LoadFromFile(config.CertFile)
-	if err != nil {
-		// cert ok but ocsp missing or not valid => renew ocsp
-		return false, true
-	}
-
-	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
-		// cert ok but ocsp expires soon (in 3 days) => renew ocsp
+	if checkOCSPRenew(config) {
 		return false, true
 	}
 
 	// everythings fine => noting to do
 	return false, false
+}
+
+func checkCertRenew(config common.Config) bool {
+	if !config.UpdateCert {
+		return false
+	}
+
+	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
+	if err != nil {
+		// no or invalid certificate => request cert
+		return true
+	}
+
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(14*24)*time.Hour {
+		// cert will expire soon (in 2 weeks) => renwew cert
+		return true
+	}
+
+	return false
+}
+
+func checkOCSPRenew(config common.Config) bool {
+	if !config.UpdateOCSP {
+		return false
+	}
+
+	ocsp, err := ocsp.LoadFromFile(config.CertFile)
+	if err != nil {
+		// cert ok but ocsp missing or not valid => renew ocsp
+		return true
+	}
+
+	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
+		// cert ok but ocsp expires soon (in 3 days) => renew ocsp
+		return true
+	}
+
+	return false
 }

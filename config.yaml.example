@@ -8,4 +8,5 @@ acmeaccountfile: acmeKey.pem
 regsiteracme: true
 updatecert: true
 updateocsp: false
+haproxysocket: ""
 runinteralminutes: 0
