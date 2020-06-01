@@ -13,9 +13,10 @@ Functionalities:
 - monitors certificate transparency logs
 - raise alarm if ceritifcate is requested by someone other
 
-## Tasks
-- Implement ACME client
-- Implement OCSP requester
-- Implement CT monitor
-- Implement haproxy interaction
-- Implement communication channel for alerts (maybe just write logs and log managment takes care of this)
+## Status
+- Config processing and scheduling impelemnted
+- Basic ACME functionality implemented
+- Basic OCSP functionality implemented
+- Nothing done for CT Log monitoring
+- haproxy interaction started
+- Nothing done for channel for alerts (maybe just write logs and log managment takes care of this)
