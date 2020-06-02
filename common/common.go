@@ -23,6 +23,8 @@ type Config struct {
 	HAProxySocket string
 
 	RunIntervalMinutes int
+
+	RenewalDue int
 }
 
 const (

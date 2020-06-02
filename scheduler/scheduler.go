@@ -92,8 +92,7 @@ func checkCertRenew(config common.Config) bool {
 		return true
 	}
 
-	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(14*24)*time.Hour {
-		// cert will expire soon (in 2 weeks) => renwew cert
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDue)*time.Hour {
 		return true
 	}
 
