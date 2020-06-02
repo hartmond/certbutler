@@ -22,7 +22,7 @@ type Config struct {
 	UpdateOCSP    bool
 	HAProxySocket string
 
-	RunInteralMinutes int
+	RunIntervalMinutes int
 }
 
 const (

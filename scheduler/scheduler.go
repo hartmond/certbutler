@@ -15,14 +15,14 @@ func RunConfig(configs []common.Config) {
 	wg := &sync.WaitGroup{}
 
 	for _, config := range configs {
-		if config.RunInteralMinutes == 0 {
+		if config.RunIntervalMinutes == 0 {
 			wg.Add(1)
 			go func() {
 				process(config)
 				wg.Done()
 			}()
 		} else {
-			ticker := time.NewTicker(time.Duration(config.RunInteralMinutes) * time.Minute)
+			ticker := time.NewTicker(time.Duration(config.RunIntervalMinutes) * time.Minute)
 			wg.Add(1) // this will never be set to done -> runs indefinitely
 			go func(waitChannel <-chan time.Time, config common.Config) {
 				for {
@@ -77,7 +77,7 @@ func getOpenTasks(config common.Config) (renewCert, renewOCSP bool) {
 		return false, true
 	}
 
-	// everythings fine => noting to do
+	// everythings fine => nothing to do
 	return false, false
 }
 
