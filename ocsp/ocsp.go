@@ -2,8 +2,8 @@ package ocsp
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 
@@ -54,16 +54,16 @@ func GetOcspResponse(certfile string) (*ocsp.Response, error) {
 }
 
 func PrintStatus(ocspResponse *ocsp.Response) {
-	fmt.Println("ProducedAt: ", ocspResponse.ProducedAt)
-	fmt.Println("ThisUpdate: ", ocspResponse.ThisUpdate)
-	fmt.Println("NextUpdate: ", ocspResponse.NextUpdate)
+	log.Println("ProducedAt: ", ocspResponse.ProducedAt)
+	log.Println("ThisUpdate: ", ocspResponse.ThisUpdate)
+	log.Println("NextUpdate: ", ocspResponse.NextUpdate)
 	switch ocspResponse.Status {
 	case ocsp.Good:
-		fmt.Println("Status: Good")
+		log.Println("Status: Good")
 	case ocsp.Revoked:
-		fmt.Printf("Status: Revoked (At: %)", ocspResponse.RevokedAt)
+		log.Printf("Status: Revoked (At: %)", ocspResponse.RevokedAt)
 	case ocsp.Unknown:
-		fmt.Println("Status: Unknown")
+		log.Println("Status: Unknown")
 	}
 }
 
