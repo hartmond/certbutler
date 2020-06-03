@@ -10,3 +10,4 @@ updatecert: true
 updateocsp: false
 haproxysocket: ""
 runinteralminutes: 0
+renewaldue: 14
