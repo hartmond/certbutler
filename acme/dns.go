@@ -27,7 +27,6 @@ func handleDNSRequest(w dns.ResponseWriter, r *dns.Msg) {
 			}
 		}
 	}
-
 	w.WriteMsg(m)
 }
 

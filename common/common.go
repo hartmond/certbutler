@@ -115,3 +115,15 @@ func loadFromPem(filename, desc string, skip int) ([]byte, error) {
 		}
 	}
 }
+
+func FlattenStringSlice(stringSlice []string) string {
+	if len(stringSlice) == 0 {
+		return ""
+	}
+	flattened := ""
+	for _, element := range stringSlice {
+		flattened = flattened + element + ","
+	}
+	flattened = flattened[:len(flattened)-1] // Remove trailing comma
+	return flattened
+}

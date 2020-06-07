@@ -1,7 +1,7 @@
 package scheduler
 
 import (
-	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -38,11 +38,12 @@ func RunConfig(configs []common.Config) {
 func process(config common.Config) {
 	renewCert, renewOCSP := getOpenTasks(config)
 
-	fmt.Printf("%s starting run (cert: %t ocsp: %t)\n", time.Now(), renewCert, renewOCSP)
+	log.Printf("Starting run (cert: %t ocsp: %t)\n", renewCert, renewOCSP)
 
 	if config.UpdateCert && renewCert {
 		err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.CertFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 		if err != nil {
+			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DnsNames), err.Error())
 			// request failed - TODO handle
 			panic(err)
 		}
@@ -70,6 +71,7 @@ func process(config common.Config) {
 
 func getOpenTasks(config common.Config) (renewCert, renewOCSP bool) {
 	if checkCertRenew(config) {
+		log.Printf("Certificate is due to renewal for %s", common.FlattenStringSlice(config.DnsNames))
 		return true, config.UpdateOCSP
 	}
 

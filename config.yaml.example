@@ -9,5 +9,5 @@ regsiteracme: true
 updatecert: true
 updateocsp: false
 haproxysocket: ""
-runinteralminutes: 0
+runintervalminutes: 0
 renewaldue: 14

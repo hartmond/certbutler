@@ -6,6 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
+	"log"
 
 	"crypto/x509"
 
@@ -60,14 +61,14 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 		}
 	}
 
-	fmt.Println("Sending AuthorizeOrder Request")
+	log.Println("Sending AuthorizeOrder Request")
 
 	order, err := client.AuthorizeOrder(ctx, acme.DomainIDs(dnsNames...))
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Autorizing Domains")
+	log.Println("Authorizing domains")
 
 	pendigChallenges := []*acme.Challenge{}
 	dnsTokens := []string{}
@@ -79,7 +80,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 		}
 
 		if authz.Status == acme.StatusValid {
-			fmt.Println(authz.Identifier.Value + " alredy autorized")
+			log.Println(authz.Identifier.Value + " alredy authorized")
 			// Already authorized.
 			continue
 		}
@@ -92,7 +93,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 			}
 		}
 		if chal == nil {
-			return fmt.Errorf("no dns-01 challenge for %q", authURL)
+			return fmt.Errorf("No dns-01 challenge for %q", authURL)
 		}
 
 		val, err := client.DNS01ChallengeRecord(chal.Token)
@@ -100,27 +101,27 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 			return fmt.Errorf("dns-01 token for %q: %v", authz.Identifier, err)
 		}
 
-		fmt.Printf("hosting dns challenge for %s: %s\n", authz.Identifier, val)
+		log.Printf("Hosting dns challenge for %s: %s\n", authz.Identifier, val)
 
 		dnsTokens = append(dnsTokens, val)
 		pendigChallenges = append(pendigChallenges, chal)
 	}
 
 	if len(pendigChallenges) > 0 {
-		// Preparing authorizsations - Start DNS server
+		// Preparing authorizations - Start DNS server
 		closeServer := hostDNS(dnsTokens)
 
-		fmt.Println("Accepting pendig challanges")
+		log.Println("Accepting pendig challenges")
 		for _, chal := range pendigChallenges {
 			if _, err := client.Accept(ctx, chal); err != nil {
 				return fmt.Errorf("dns-01 accept for %q: %v", chal, err)
 			}
 		}
 
-		fmt.Println("Waiting for authorizations...")
+		log.Println("Waiting for authorizations...")
 		for _, authURL := range order.AuthzURLs {
 			if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
-				return fmt.Errorf("authorization for %q failed: %v", authURL, err)
+				return fmt.Errorf("Authorization for %q failed: %v", authURL, err)
 			}
 		}
 
@@ -128,7 +129,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 		closeServer <- true
 	}
 
-	fmt.Println("Generating PrivateKey and CSR")
+	log.Println("Generating PrivateKey and CSR")
 
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -144,19 +145,18 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 		return err
 	}
 
-	fmt.Println("Requesting Certificate")
+	log.Println("Requesting certificate")
 
 	crts, _, err := client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Saving Certificate")
+	log.Printf("Saving certificate to %s", certFile)
 
 	err = common.SaveToPEMFile(certFile, key, crts)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
