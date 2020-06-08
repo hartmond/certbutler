@@ -45,7 +45,7 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 	return client, nil
 }
 
-func RequestCertificate(dnsNames []string, accountFile string, certFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) error {
+func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) (*ecdsa.PrivateKey, [][]byte, error) {
 	ctx := context.Background()
 	var client *acme.Client
 	var err error
@@ -53,11 +53,11 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 	client, err = loadAccount(ctx, accountFile, acmeDirectory)
 	if err != nil {
 		if !registerIfMissing {
-			return err
+			return nil, nil, err
 		}
 		client, err = registerAccount(ctx, accountFile, acmeDirectory)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
 
@@ -65,7 +65,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 
 	order, err := client.AuthorizeOrder(ctx, acme.DomainIDs(dnsNames...))
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	log.Println("Authorizing domains")
@@ -76,7 +76,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 	for _, authURL := range order.AuthzURLs {
 		authz, err := client.GetAuthorization(ctx, authURL)
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 
 		if authz.Status == acme.StatusValid {
@@ -93,12 +93,12 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 			}
 		}
 		if chal == nil {
-			return fmt.Errorf("No dns-01 challenge for %q", authURL)
+			return nil, nil, fmt.Errorf("No dns-01 challenge for %q", authURL)
 		}
 
 		val, err := client.DNS01ChallengeRecord(chal.Token)
 		if err != nil {
-			return fmt.Errorf("dns-01 token for %q: %v", authz.Identifier, err)
+			return nil, nil, fmt.Errorf("dns-01 token for %q: %v", authz.Identifier, err)
 		}
 
 		log.Printf("Hosting dns challenge for %s: %s\n", authz.Identifier, val)
@@ -114,14 +114,14 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 		log.Println("Accepting pendig challenges")
 		for _, chal := range pendigChallenges {
 			if _, err := client.Accept(ctx, chal); err != nil {
-				return fmt.Errorf("dns-01 accept for %q: %v", chal, err)
+				return nil, nil, fmt.Errorf("dns-01 accept for %q: %v", chal, err)
 			}
 		}
 
 		log.Println("Waiting for authorizations...")
 		for _, authURL := range order.AuthzURLs {
 			if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
-				return fmt.Errorf("Authorization for %q failed: %v", authURL, err)
+				return nil, nil, fmt.Errorf("Authorization for %q failed: %v", authURL, err)
 			}
 		}
 
@@ -133,7 +133,7 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	// TODO add must staple if requested
@@ -142,21 +142,15 @@ func RequestCertificate(dnsNames []string, accountFile string, certFile string, 
 	}
 	csr, err := x509.CreateCertificateRequest(rand.Reader, req, key)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	log.Println("Requesting certificate")
 
 	crts, _, err := client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	log.Printf("Saving certificate to %s", certFile)
-
-	err = common.SaveToPEMFile(certFile, key, crts)
-	if err != nil {
-		return err
-	}
-	return nil
+	return key, crts, nil
 }

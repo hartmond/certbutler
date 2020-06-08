@@ -18,8 +18,7 @@ type Config struct {
 	AcmeAccountFile string
 	RegsiterAcme    bool
 
-	UpdateCert    bool
-	UpdateOCSP    bool
+	Mode          string
 	HAProxySocket string
 
 	RunIntervalMinutes int
@@ -32,6 +31,7 @@ const (
 	pemTypeCert = "CERTIFICATE"
 )
 
+// SaveToPEMFile saves certiceates and key pem encoded to a file
 func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error {
 	// TODO if file exists; maybe rename old file to archive it
 
@@ -68,6 +68,7 @@ func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error
 	return nil
 }
 
+// LoadKeyFromPEMFile parses a key from a pem file. Skip specifies how many keys are skipped before the next one is parsed and returned.
 func LoadKeyFromPEMFile(filename string, skip int) (*ecdsa.PrivateKey, error) {
 	dataBytes, err := loadFromPem(filename, pemTypeKey, skip)
 	if err != nil {
@@ -76,6 +77,7 @@ func LoadKeyFromPEMFile(filename string, skip int) (*ecdsa.PrivateKey, error) {
 	return x509.ParseECPrivateKey(dataBytes)
 }
 
+// LoadCertFromPEMFile parses a certificate from a pem file. Skip specifies how many certificates are skipped before the next one is parsed and returned.
 func LoadCertFromPEMFile(filename string, skip int) (*x509.Certificate, error) {
 	dataBytes, err := loadFromPem(filename, pemTypeCert, skip)
 	if err != nil {
@@ -116,6 +118,7 @@ func loadFromPem(filename, desc string, skip int) ([]byte, error) {
 	}
 }
 
+// FlattenStringSlice joins strings from a slice with commas for printing
 func FlattenStringSlice(stringSlice []string) string {
 	if len(stringSlice) == 0 {
 		return ""

@@ -7,6 +7,8 @@ import (
 
 	"felix-hartmond.de/projects/certbutler/acme"
 	"felix-hartmond.de/projects/certbutler/common"
+	"felix-hartmond.de/projects/certbutler/haproxy"
+	"felix-hartmond.de/projects/certbutler/nginx"
 	"felix-hartmond.de/projects/certbutler/ocsp"
 )
 
@@ -36,58 +38,57 @@ func RunConfig(configs []common.Config) {
 }
 
 func process(config common.Config) {
-	renewCert, renewOCSP := getOpenTasks(config)
+	log.Println("Starting Run")
 
-	log.Printf("Starting run (cert: %t ocsp: %t)\n", renewCert, renewOCSP)
+	renewCert := checkCertRenew(config)
 
-	if config.UpdateCert && renewCert {
-		err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.CertFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
+	if renewCert {
+		certs, key, err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 		if err != nil {
 			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DnsNames), err.Error())
 			// request failed - TODO handle
 			panic(err)
 		}
+
+		if config.Mode == "nginx" {
+			err = nginx.SaveCert(config, certs, key)
+			if err != nil {
+				panic(err) // TODO
+			}
+			err = nginx.ReloadServer(config)
+			if err != nil {
+				panic(err) // TODO
+			}
+		} else {
+			err = haproxy.SaveCert(config, certs, key)
+			if err != nil {
+				panic(err) // TODO
+			}
+			err = haproxy.UpdateServer(config, certs, key)
+			if err != nil {
+				panic(err) // TODO
+			}
+		}
 	}
 
-	if config.UpdateOCSP && renewOCSP {
+	if config.Mode == "haproxy" && (renewCert || checkOCSPRenew(config)) {
 		ocspResponse, err := ocsp.GetOcspResponse(config.CertFile)
 		if err != nil {
 			panic(err)
 		}
-		ocsp.PrintStatus(ocspResponse)
-	}
 
-	if config.HAProxySocket != "" {
-		// TODO make cert, key, ocspResponse available for calling
-		if renewCert && renewOCSP {
-			// TODO haproxy.UpdateHAProxy(config.HAProxySocket, cert, key, ocspResponse)
-		} else if renewCert {
-			// TODO haproxy.UpdateHAProxy(config.HAProxySocket, cert, key, nil)
-		} else if renewOCSP {
-			// TODO haproxy.UpdateHAProxy(config.HAProxySocket, nil, nil, ocspResponse)
+		err = haproxy.SaveOCSP(config, ocspResponse)
+		if err != nil {
+			panic(err) // TODO
+		}
+		err = haproxy.UpdateOCSP(config, ocspResponse)
+		if err != nil {
+			panic(err) // TODO
 		}
 	}
 }
 
-func getOpenTasks(config common.Config) (renewCert, renewOCSP bool) {
-	if checkCertRenew(config) {
-		log.Printf("Certificate is due to renewal for %s", common.FlattenStringSlice(config.DnsNames))
-		return true, config.UpdateOCSP
-	}
-
-	if checkOCSPRenew(config) {
-		return false, true
-	}
-
-	// everythings fine => nothing to do
-	return false, false
-}
-
 func checkCertRenew(config common.Config) bool {
-	if !config.UpdateCert {
-		return false
-	}
-
 	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
 	if err != nil {
 		// no or invalid certificate => request cert
@@ -102,18 +103,14 @@ func checkCertRenew(config common.Config) bool {
 }
 
 func checkOCSPRenew(config common.Config) bool {
-	if !config.UpdateOCSP {
-		return false
-	}
-
 	ocsp, err := ocsp.LoadFromFile(config.CertFile)
 	if err != nil {
-		// cert ok but ocsp missing or not valid => renew ocsp
+		// ocsp missing or not valid => renew ocsp
 		return true
 	}
 
 	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
-		// cert ok but ocsp expires soon (in 3 days) => renew ocsp
+		// ocsp expires soon (in 3 days) => renew ocsp
 		return true
 	}
 
