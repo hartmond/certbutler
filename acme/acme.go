@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509/pkix"
+	"encoding/asn1"
 	"fmt"
 	"log"
 
@@ -136,10 +138,19 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 		return nil, nil, err
 	}
 
-	// TODO add must staple if requested
+	// TODO add common Name
+
 	req := &x509.CertificateRequest{
 		DNSNames: dnsNames,
 	}
+
+	if mustStaple {
+		req.ExtraExtensions = append(req.ExtraExtensions, pkix.Extension{
+			Id:    asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 24},
+			Value: []byte{0x30, 0x03, 0x02, 0x01, 0x05},
+		})
+	}
+
 	csr, err := x509.CreateCertificateRequest(rand.Reader, req, key)
 	if err != nil {
 		return nil, nil, err
