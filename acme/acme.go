@@ -138,8 +138,6 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 		return nil, nil, err
 	}
 
-	// TODO add common Name
-
 	req := &x509.CertificateRequest{
 		DNSNames: dnsNames,
 	}

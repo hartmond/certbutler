@@ -6,8 +6,7 @@ muststaple: false
 acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
 acmeaccountfile: acmeKey.pem
 regsiteracme: true
-updatecert: true
-updateocsp: false
+mode: haproxy
 haproxysocket: ""
 runintervalminutes: 0
 renewaldue: 14
