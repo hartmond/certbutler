@@ -9,6 +9,7 @@ import (
 	"encoding/asn1"
 	"fmt"
 	"log"
+	"time"
 
 	"crypto/x509"
 
@@ -162,4 +163,18 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 	}
 
 	return crts, key, nil
+}
+
+func CheckCertRenew(config common.Config) bool {
+	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
+	if err != nil {
+		// no or invalid certificate => request cert
+		return true
+	}
+
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDue)*time.Hour {
+		return true
+	}
+
+	return false
 }

@@ -50,9 +50,9 @@ func process(config common.Config) {
 	}
 
 	// check tasks for this run
-	handleCert, handleOCSP := webServer.GetRequirements()          // which parts should certbutler handle
-	needCert := handleCert && checkCertRenew(config)               // has the certificate to be renewed?
-	needOCSP := handleOCSP && (needCert || checkOCSPRenew(config)) // has ocsp to be renewed?
+	handleCert, handleOCSP := webServer.GetRequirements()               // which parts should certbutler handle
+	needCert := handleCert && acme.CheckCertRenew(config)               // has the certificate to be renewed?
+	needOCSP := handleOCSP && (needCert || ocsp.CheckOCSPRenew(config)) // has ocsp to be renewed?
 
 	if needCert {
 		certs, key, err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
@@ -79,34 +79,4 @@ func process(config common.Config) {
 	if err != nil {
 		panic(err) // TODO
 	}
-
-}
-
-func checkCertRenew(config common.Config) bool {
-	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
-	if err != nil {
-		// no or invalid certificate => request cert
-		return true
-	}
-
-	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDue)*time.Hour {
-		return true
-	}
-
-	return false
-}
-
-func checkOCSPRenew(config common.Config) bool {
-	ocsp, err := ocsp.LoadFromFile(config.CertFile)
-	if err != nil {
-		// ocsp missing or not valid => renew ocsp
-		return true
-	}
-
-	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
-		// ocsp expires soon (in 3 days) => renew ocsp
-		return true
-	}
-
-	return false
 }

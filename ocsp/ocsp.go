@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"felix-hartmond.de/projects/certbutler/common"
 
@@ -68,4 +69,19 @@ func LoadFromFile(certfile string) (*ocsp.Response, error) {
 	}
 
 	return ocsp.ParseResponse(rawOCSPBytes, issueCert)
+}
+
+func CheckOCSPRenew(config common.Config) bool {
+	ocsp, err := LoadFromFile(config.CertFile)
+	if err != nil {
+		// ocsp missing or not valid => renew ocsp
+		return true
+	}
+
+	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
+		// ocsp expires soon (in 3 days) => renew ocsp
+		return true
+	}
+
+	return false
 }
