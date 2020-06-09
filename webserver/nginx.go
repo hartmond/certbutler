@@ -1,4 +1,4 @@
-package nginx
+package webserver
 
 import (
 	"crypto/ecdsa"
@@ -10,13 +10,6 @@ import (
 type NginxInteraction struct {
 	config  common.Config
 	changes bool
-}
-
-func New(config common.Config) common.WebServerInteraction {
-	return &NginxInteraction{
-		config:  config,
-		changes: false,
-	}
 }
 
 func (server *NginxInteraction) GetRequirements() (bool, bool) {

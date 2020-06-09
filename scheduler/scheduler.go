@@ -7,9 +7,8 @@ import (
 
 	"felix-hartmond.de/projects/certbutler/acme"
 	"felix-hartmond.de/projects/certbutler/common"
-	"felix-hartmond.de/projects/certbutler/haproxy"
-	"felix-hartmond.de/projects/certbutler/nginx"
 	"felix-hartmond.de/projects/certbutler/ocsp"
+	"felix-hartmond.de/projects/certbutler/webserver"
 )
 
 // RunConfig starts cerbutler tasked based on a configuration
@@ -40,14 +39,7 @@ func RunConfig(configs []common.Config) {
 func process(config common.Config) {
 	log.Println("Starting Run")
 
-	var webServer common.WebServerInteraction
-	if config.Mode == "haproxy" {
-		webServer = haproxy.New(config)
-	} else if config.Mode == "nginx" {
-		webServer = nginx.New(config)
-	} else {
-		log.Fatalf("Web server type %s not supported")
-	}
+	webServer := webserver.New(config)
 
 	// check tasks for this run
 	handleCert, handleOCSP := webServer.GetRequirements()               // which parts should certbutler handle

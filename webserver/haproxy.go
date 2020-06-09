@@ -1,4 +1,4 @@
-package haproxy
+package webserver
 
 import (
 	"crypto/ecdsa"
@@ -13,12 +13,6 @@ type HaProxyInteraction struct {
 	stagedCerts [][]byte
 	stagedKey   *ecdsa.PrivateKey
 	stagedOCSP  []byte
-}
-
-func New(config common.Config) common.WebServerInteraction {
-	return &HaProxyInteraction{
-		config: config,
-	}
 }
 
 func (server *HaProxyInteraction) GetRequirements() (bool, bool) {
