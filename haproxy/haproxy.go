@@ -2,30 +2,44 @@ package haproxy
 
 import (
 	"crypto/ecdsa"
-	"fmt"
+	"io/ioutil"
+	"os"
 
 	"felix-hartmond.de/projects/certbutler/common"
-	"golang.org/x/crypto/ocsp"
 )
 
-// SaveCert saves a Certificate, its chain and key to a pem file
-func SaveCert(config common.Config, key *ecdsa.PrivateKey, certs [][]byte) error {
-	return common.SaveToPEMFile(config.CertFile, key, certs)
+type HaProxyInteraction struct {
+	config      common.Config
+	stagedCerts [][]byte
+	stagedKey   *ecdsa.PrivateKey
+	stagedOCSP  []byte
 }
 
-// UpdateServer sends a certificate, its chain and key to a haproxy process
-func UpdateServer(config common.Config, key *ecdsa.PrivateKey, certs [][]byte) error {
-	return fmt.Errorf("not implemented")
+func New(config common.Config) common.WebServerInteraction {
+	return &HaProxyInteraction{
+		config: config,
+	}
 }
 
-// SaveOCSP saves a OCSP response for stapling in a file
-func SaveOCSP(config common.Config, response *ocsp.Response) error {
-	return fmt.Errorf("not implemented")
+func (server *HaProxyInteraction) GetRequirements() (bool, bool) {
+	return true, true
 }
 
-// UpdateOCSP send a OCSP reponse for stapling to a haproxy process
-func UpdateOCSP(config common.Config, response *ocsp.Response) error {
-	return fmt.Errorf("not implemented")
+func (server *HaProxyInteraction) SetCert(certs [][]byte, key *ecdsa.PrivateKey) error {
+	server.stagedCerts = certs
+	server.stagedKey = key
+	return common.SaveToPEMFile(server.config.CertFile, server.stagedKey, server.stagedCerts)
+}
+
+func (server *HaProxyInteraction) SetOCSP(response []byte) error {
+	server.stagedOCSP = response
+	return ioutil.WriteFile(server.config.CertFile+".ocsp", server.stagedOCSP, os.FileMode(int(0600)))
+}
+
+func (server *HaProxyInteraction) UpdateServer() error {
+
+	// TODO update haproxy over socket
+	return nil
 }
 
 /*

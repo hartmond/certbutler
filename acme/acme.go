@@ -47,7 +47,7 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 	return client, nil
 }
 
-func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) (*ecdsa.PrivateKey, [][]byte, error) {
+func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) ([][]byte, *ecdsa.PrivateKey, error) {
 	ctx := context.Background()
 	var client *acme.Client
 	var err error
@@ -161,5 +161,5 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 		return nil, nil, err
 	}
 
-	return key, crts, nil
+	return crts, key, nil
 }

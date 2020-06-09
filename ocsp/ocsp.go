@@ -5,14 +5,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	"felix-hartmond.de/projects/certbutler/common"
 
 	"golang.org/x/crypto/ocsp"
 )
 
-func GetOcspResponse(certfile string) (*ocsp.Response, error) {
+func GetOcspResponse(certfile string) ([]byte, error) {
 	cert, err := common.LoadCertFromPEMFile(certfile, 0)
 	if err != nil {
 		return nil, err
@@ -40,17 +39,7 @@ func GetOcspResponse(certfile string) (*ocsp.Response, error) {
 		return nil, err
 	}
 
-	ocspResponse, err := ocsp.ParseResponse(ocspResponseRaw, issueCert)
-	if err != nil {
-		return nil, err
-	}
-
-	err = ioutil.WriteFile(certfile+".ocsp", ocspResponseRaw, os.FileMode(int(0600)))
-	if err != nil {
-		return nil, err
-	}
-
-	return ocspResponse, nil
+	return ocspResponseRaw, nil
 }
 
 func PrintStatus(ocspResponse *ocsp.Response) {

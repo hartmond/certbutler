@@ -26,6 +26,13 @@ type Config struct {
 	RenewalDue int
 }
 
+type WebServerInteraction interface {
+	GetRequirements() (bool, bool)
+	SetCert([][]byte, *ecdsa.PrivateKey) error
+	SetOCSP([]byte) error
+	UpdateServer() error
+}
+
 const (
 	pemTypeKey  = "EC PRIVATE KEY"
 	pemTypeCert = "CERTIFICATE"

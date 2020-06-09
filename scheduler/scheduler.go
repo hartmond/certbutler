@@ -40,9 +40,21 @@ func RunConfig(configs []common.Config) {
 func process(config common.Config) {
 	log.Println("Starting Run")
 
-	renewCert := checkCertRenew(config)
+	var webServer common.WebServerInteraction
+	if config.Mode == "haproxy" {
+		webServer = haproxy.New(config)
+	} else if config.Mode == "nginx" {
+		webServer = nginx.New(config)
+	} else {
+		log.Fatalf("Web server type %s not supported")
+	}
 
-	if renewCert {
+	// check tasks for this run
+	handleCert, handleOCSP := webServer.GetRequirements()          // which parts should certbutler handle
+	needCert := handleCert && checkCertRenew(config)               // has the certificate to be renewed?
+	needOCSP := handleOCSP && (needCert || checkOCSPRenew(config)) // has ocsp to be renewed?
+
+	if needCert {
 		certs, key, err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 		if err != nil {
 			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DnsNames), err.Error())
@@ -50,42 +62,24 @@ func process(config common.Config) {
 			panic(err)
 		}
 
-		if config.Mode == "nginx" {
-			err = nginx.SaveCert(config, certs, key)
-			if err != nil {
-				panic(err) // TODO
-			}
-			err = nginx.ReloadServer(config)
-			if err != nil {
-				panic(err) // TODO
-			}
-		} else {
-			err = haproxy.SaveCert(config, certs, key)
-			if err != nil {
-				panic(err) // TODO
-			}
-			err = haproxy.UpdateServer(config, certs, key)
-			if err != nil {
-				panic(err) // TODO
-			}
-		}
+		webServer.SetCert(certs, key)
 	}
 
-	if config.Mode == "haproxy" && (renewCert || checkOCSPRenew(config)) {
+	if needOCSP {
 		ocspResponse, err := ocsp.GetOcspResponse(config.CertFile)
 		if err != nil {
-			panic(err)
+			panic(err) // TODO
 		}
 
-		err = haproxy.SaveOCSP(config, ocspResponse)
-		if err != nil {
-			panic(err) // TODO
-		}
-		err = haproxy.UpdateOCSP(config, ocspResponse)
-		if err != nil {
-			panic(err) // TODO
-		}
+		webServer.SetOCSP(ocspResponse)
 	}
+
+	// UpdateServer takes track internally if something has to be done here
+	err := webServer.UpdateServer()
+	if err != nil {
+		panic(err) // TODO
+	}
+
 }
 
 func checkCertRenew(config common.Config) bool {
