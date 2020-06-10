@@ -25,6 +25,6 @@ func New(config common.Config) WebServerInteraction {
 			changes: false,
 		}
 	}
-	log.Fatalf("Web server type %s not supported")
+	log.Fatalf("Web server type %s not supported", config.Mode)
 	return nil
 }
