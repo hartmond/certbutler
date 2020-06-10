@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/scheduler"
@@ -11,13 +12,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: cerbutler <configfile> <configfile> ...\n")
-		os.Exit(1)
-	}
-
 	configs := []common.Config{}
-	for _, filename := range os.Args[1:] {
+	for _, filename := range getConfigFiles() {
 		yamlBytes, err := ioutil.ReadFile(filename)
 		if err != nil {
 			panic(err)
@@ -32,4 +28,16 @@ func main() {
 	}
 
 	scheduler.RunConfig(configs)
+}
+
+func getConfigFiles() []string {
+	if len(os.Args) > 2 {
+		return os.Args[1:]
+	}
+	if env := os.Getenv("certbutlerconfig"); env != "" {
+		return strings.Split(env, ",")
+	}
+	fmt.Printf("Usage: cerbutler <configfile> <configfile> ...\n")
+	os.Exit(1)
+	return nil
 }
