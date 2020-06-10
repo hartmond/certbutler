@@ -29,7 +29,10 @@ In this case, one config file per certificate has to be provided.
 ### Running the Butler
 ``./certbutler <config1>.yaml <config2>.yaml``
 
-In the future, there will be a Dockerfile and a systemd service file for deployment.
+The list of config files can also be provided via an environment variable ``certbutlerconfig=<config1>.yaml,<config2>.yaml``.
+This can be used when using the Docker container.
+
+In the future, there will also be a systemd service file for deployment.
 
 ## Webserver integration
 There are modes for haproxy and nginx.
