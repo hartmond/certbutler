@@ -166,7 +166,7 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 	return crts, key, nil
 }
 
-// CheckCertRenew checks if the stored certficate exists and is still longer valid than renewaldue from config
+// CheckCertRenew checks if the stored certficate exists and is still longer valid than renewalduecert from config
 func CheckCertRenew(config common.Config) bool {
 	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
 	if err != nil {
@@ -174,7 +174,7 @@ func CheckCertRenew(config common.Config) bool {
 		return true
 	}
 
-	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDue*24)*time.Hour {
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDueCert*24)*time.Hour {
 		return true
 	}
 

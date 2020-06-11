@@ -1,6 +1,7 @@
 # TIMING CONFIGURATION
 runintervalminutes: 0
-renewaldue: 14
+renewalduecert: 14
+renewaldueocsp: 14
 
 # CERTIFICATE CONFIGURATION
 dnsnames:
@@ -14,7 +15,7 @@ regsiteracme: true
 # WEBSERVER CONFIGURATION (FOR HAPROXY)
 mode: haproxy
 certfile: example.com.pem
-haproxysocket: "/run/haproxy/admin.sock"
+haproxysocket: /run/haproxy/admin.sock
 
 # WEBSERVER CONFIGURATION (FOR NGINX)
 # mode: nginx

@@ -2,10 +2,12 @@ package common
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -13,7 +15,8 @@ import (
 // Config is the struct holding all configuration for a certificate. The config file is parsed into this struct.
 type Config struct {
 	RunIntervalMinutes int
-	RenewalDue         int // remaining valid days of the certitifcate before renew
+	RenewalDueCert     int // remaining valid days of the certitifcate before renew
+	RenewalDueOCSP     int // remaining valid days of the OCSP response before renew
 
 	DNSNames        []string
 	MustStaple      bool
@@ -54,37 +57,42 @@ func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error
 		}
 	}
 
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	fileData, err := EncodePem(key, certs)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	return ioutil.WriteFile(filename, fileData, 0600)
+}
 
-	if key != nil {
-		keyBytes, err := x509.MarshalECPrivateKey(key)
-		if err != nil {
-			return err
-		}
-		err = pem.Encode(file, &pem.Block{
-			Type:  pemTypeKey,
-			Bytes: keyBytes,
-		})
-		if err != nil {
-			return err
-		}
-	}
+// EncodePem encodes certificates and key in PEM format
+func EncodePem(key *ecdsa.PrivateKey, certs [][]byte) ([]byte, error) {
+	var buf bytes.Buffer
 
 	for _, cert := range certs {
-		err = pem.Encode(file, &pem.Block{
+		err := pem.Encode(&buf, &pem.Block{
 			Type:  pemTypeCert,
 			Bytes: cert,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return nil
+	if key != nil {
+		keyBytes, err := x509.MarshalECPrivateKey(key)
+		if err != nil {
+			return nil, err
+		}
+		err = pem.Encode(&buf, &pem.Block{
+			Type:  pemTypeKey,
+			Bytes: keyBytes,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return buf.Bytes(), nil
 }
 
 // LoadKeyFromPEMFile parses a key from a pem file. Skip specifies how many keys are skipped before the next one is parsed and returned.

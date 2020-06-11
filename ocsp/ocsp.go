@@ -3,6 +3,7 @@ package ocsp
 import (
 	"bytes"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 // GetOCSPResponse gathers a new OCSP response for stapling
 func GetOCSPResponse(certfile string) ([]byte, error) {
+	log.Println("Requesting new OCSP response")
 	cert, err := common.LoadCertFromPEMFile(certfile, 0)
 	if err != nil {
 		return nil, err
@@ -58,7 +60,7 @@ func LoadFromFile(certfile string) (*ocsp.Response, error) {
 	return ocsp.ParseResponse(rawOCSPBytes, issueCert)
 }
 
-// CheckOCSPRenew checks if a prepared OCSP response exists and if it is still valid for at least three days
+// CheckOCSPRenew checks if a prepared OCSP response exists and if it is still longer valid than renewaldueocsp from config
 func CheckOCSPRenew(config common.Config) bool {
 	ocsp, err := LoadFromFile(config.CertFile)
 	if err != nil {
@@ -66,7 +68,7 @@ func CheckOCSPRenew(config common.Config) bool {
 		return true
 	}
 
-	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(3*24)*time.Hour {
+	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(config.RenewalDueOCSP*24)*time.Hour {
 		// ocsp expires soon (in 3 days) => renew ocsp
 		return true
 	}
