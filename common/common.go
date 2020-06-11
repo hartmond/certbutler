@@ -7,12 +7,13 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // Config is the struct holding all configuration for a certificate. The config file is parsed into this struct.
 type Config struct {
 	RunIntervalMinutes int
-	RenewalDue         int
+	RenewalDue         int // remaining valid days of the certitifcate before renew
 
 	DNSNames        []string
 	MustStaple      bool
@@ -33,7 +34,25 @@ const (
 
 // SaveToPEMFile saves certiceates and key pem encoded to a file
 func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error {
-	// TODO if file exists; maybe rename old file to archive it
+	// if file already exists rotate the old file
+	if _, err := os.Stat(filename); err == nil {
+		name, extension := "", ""
+		if offset := strings.LastIndex(filename, "."); offset == -1 {
+			name = filename
+		} else {
+			name = filename[:offset]
+			extension = filename[offset:]
+		}
+		for i := 0; ; i++ {
+			nextFilename := fmt.Sprintf("%s-%d%s", name, i, extension)
+			if _, err := os.Stat(nextFilename); err != nil {
+				if err = os.Rename(filename, nextFilename); err != nil {
+					return err
+				}
+				break
+			}
+		}
+	}
 
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {

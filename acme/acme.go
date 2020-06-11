@@ -174,7 +174,7 @@ func CheckCertRenew(config common.Config) bool {
 		return true
 	}
 
-	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDue)*time.Hour {
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDue*24)*time.Hour {
 		return true
 	}
 
