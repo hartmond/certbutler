@@ -47,9 +47,9 @@ func process(config common.Config) {
 	needOCSP := handleOCSP && (needCert || ocsp.CheckOCSPRenew(config)) // has ocsp to be renewed?
 
 	if needCert {
-		certs, key, err := acme.RequestCertificate(config.DnsNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
+		certs, key, err := acme.RequestCertificate(config.DNSNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 		if err != nil {
-			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DnsNames), err.Error())
+			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
 			// request failed - TODO handle
 			panic(err)
 		}
@@ -61,7 +61,7 @@ func process(config common.Config) {
 	}
 
 	if needOCSP {
-		ocspResponse, err := ocsp.GetOcspResponse(config.CertFile)
+		ocspResponse, err := ocsp.GetOCSPResponse(config.CertFile)
 		if err != nil {
 			panic(err) // TODO
 		}

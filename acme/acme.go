@@ -48,6 +48,7 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 	return client, nil
 }
 
+// RequestCertificate runs the acme flow to request a certificate with the desired contents
 func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) ([][]byte, *ecdsa.PrivateKey, error) {
 	ctx := context.Background()
 	var client *acme.Client
@@ -165,6 +166,7 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 	return crts, key, nil
 }
 
+// CheckCertRenew checks if the stored certficate exists and is still longer valid than renewaldue from config
 func CheckCertRenew(config common.Config) bool {
 	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
 	if err != nil {

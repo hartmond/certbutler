@@ -9,11 +9,12 @@ import (
 	"os"
 )
 
+// Config is the struct holding all configuration for a certificate. The config file is parsed into this struct.
 type Config struct {
 	RunIntervalMinutes int
 	RenewalDue         int
 
-	DnsNames        []string
+	DNSNames        []string
 	MustStaple      bool
 	AcmeDirectory   string
 	AcmeAccountFile string

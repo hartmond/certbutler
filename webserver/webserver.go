@@ -7,14 +7,16 @@ import (
 	"felix-hartmond.de/projects/certbutler/common"
 )
 
-type WebServerInteraction interface {
+// Interaction defines the interface for webserver modes
+type Interaction interface {
 	GetRequirements() (bool, bool)
 	SetCert([][]byte, *ecdsa.PrivateKey) error
 	SetOCSP([]byte) error
 	UpdateServer() error
 }
 
-func New(config common.Config) WebServerInteraction {
+// New returns an Interaction object based on webserver mode in the configuration
+func New(config common.Config) Interaction {
 	if config.Mode == "haproxy" {
 		return &HaProxyInteraction{
 			config: config,

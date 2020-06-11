@@ -3,7 +3,6 @@ package ocsp
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
@@ -12,7 +11,8 @@ import (
 	"golang.org/x/crypto/ocsp"
 )
 
-func GetOcspResponse(certfile string) ([]byte, error) {
+// GetOCSPResponse gathers a new OCSP response for stapling
+func GetOCSPResponse(certfile string) ([]byte, error) {
 	cert, err := common.LoadCertFromPEMFile(certfile, 0)
 	if err != nil {
 		return nil, err
@@ -43,20 +43,7 @@ func GetOcspResponse(certfile string) ([]byte, error) {
 	return ocspResponseRaw, nil
 }
 
-func PrintStatus(ocspResponse *ocsp.Response) {
-	log.Println("ProducedAt: ", ocspResponse.ProducedAt)
-	log.Println("ThisUpdate: ", ocspResponse.ThisUpdate)
-	log.Println("NextUpdate: ", ocspResponse.NextUpdate)
-	switch ocspResponse.Status {
-	case ocsp.Good:
-		log.Println("Status: Good")
-	case ocsp.Revoked:
-		log.Printf("Status: Revoked (At: %)", ocspResponse.RevokedAt)
-	case ocsp.Unknown:
-		log.Println("Status: Unknown")
-	}
-}
-
+// LoadFromFile loads and parsesn an OCSP Response from a file
 func LoadFromFile(certfile string) (*ocsp.Response, error) {
 	rawOCSPBytes, err := ioutil.ReadFile(certfile + ".ocsp")
 	if err != nil {
@@ -71,6 +58,7 @@ func LoadFromFile(certfile string) (*ocsp.Response, error) {
 	return ocsp.ParseResponse(rawOCSPBytes, issueCert)
 }
 
+// CheckOCSPRenew checks if a prepared OCSP response exists and if it is still valid for at least three days
 func CheckOCSPRenew(config common.Config) bool {
 	ocsp, err := LoadFromFile(config.CertFile)
 	if err != nil {
