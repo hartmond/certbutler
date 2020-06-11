@@ -1,0 +1,22 @@
+# TIMING CONFIGURATION
+runintervalminutes: 0
+renewaldue: 14
+
+# CERTIFICATE CONFIGURATION
+dnsnames:
+- example.com
+- '*.example.com'
+muststaple: true
+acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
+acmeaccountfile: acmeKey.pem
+regsiteracme: true
+
+# WEBSERVER CONFIGURATION (FOR HAPROXY)
+mode: haproxy
+certfile: example.com.pem
+haproxysocket: "/run/haproxy/admin.sock"
+
+# WEBSERVER CONFIGURATION (FOR NGINX)
+# mode: nginx
+# certfile: example.com.pem
+# keyfile: example.com.key

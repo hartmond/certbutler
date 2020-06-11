@@ -54,7 +54,10 @@ func process(config common.Config) {
 			panic(err)
 		}
 
-		webServer.SetCert(certs, key)
+		err = webServer.SetCert(certs, key)
+		if err != nil {
+			log.Fatalf("Writing ceritifcate to disk failed with error %s", err.Error())
+		}
 	}
 
 	if needOCSP {
@@ -63,12 +66,17 @@ func process(config common.Config) {
 			panic(err) // TODO
 		}
 
-		webServer.SetOCSP(ocspResponse)
+		err = webServer.SetOCSP(ocspResponse)
+		if err != nil {
+			log.Fatalf("Writing OCSP response to disk failed with error %s", err.Error())
+		}
 	}
 
-	// UpdateServer takes track internally if something has to be done here
-	err := webServer.UpdateServer()
-	if err != nil {
-		panic(err) // TODO
+	if needCert || needOCSP {
+		err := webServer.UpdateServer()
+		if err != nil {
+			panic(err) // TODO
+			// differentiate: server not reached; server responded with known error; server responded unkown error
+		}
 	}
 }

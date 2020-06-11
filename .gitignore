@@ -1,4 +1,5 @@
 *.pem
-*.pem.issue
 *.pem.ocsp
-config.yaml
+*.key
+*.yaml
+!config.yaml

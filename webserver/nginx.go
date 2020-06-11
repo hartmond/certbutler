@@ -17,15 +17,11 @@ func (server *NginxInteraction) GetRequirements() (bool, bool) {
 }
 
 func (server *NginxInteraction) SetCert(certs [][]byte, key *ecdsa.PrivateKey) error {
-	err := common.SaveToPEMFile(server.config.CertFile, nil, certs[:1])
+	err := common.SaveToPEMFile(server.config.CertFile, nil, certs)
 	if err != nil {
 		return err
 	}
-	err = common.SaveToPEMFile(server.config.CertFile+"_chain", nil, certs[1:])
-	if err != nil {
-		return err
-	}
-	err = common.SaveToPEMFile(server.config.CertFile+"_key", key, nil)
+	err = common.SaveToPEMFile(server.config.KeyFile, key, nil)
 	if err != nil {
 		return err
 	}
@@ -39,8 +35,6 @@ func (server *NginxInteraction) SetOCSP([]byte) error {
 }
 
 func (server *NginxInteraction) UpdateServer() error {
-	if server.changes {
-		// TODO reload server
-	}
+	// TODO reload server
 	return nil
 }

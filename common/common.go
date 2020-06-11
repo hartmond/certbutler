@@ -10,7 +10,8 @@ import (
 )
 
 type Config struct {
-	CertFile string
+	RunIntervalMinutes int
+	RenewalDue         int
 
 	DnsNames        []string
 	MustStaple      bool
@@ -19,11 +20,9 @@ type Config struct {
 	RegsiterAcme    bool
 
 	Mode          string
-	HAProxySocket string
-
-	RunIntervalMinutes int
-
-	RenewalDue int
+	CertFile      string // used both in haproxy and nginx mode
+	KeyFile       string // used only in nginx mode
+	HAProxySocket string // used only in haproxy mode
 }
 
 const (
