@@ -31,7 +31,7 @@ func main() {
 }
 
 func getConfigFiles() []string {
-	if len(os.Args) > 2 {
+	if len(os.Args) > 1 {
 		return os.Args[1:]
 	}
 	if env := os.Getenv("certbutlerconfig"); env != "" {
