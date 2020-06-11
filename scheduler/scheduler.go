@@ -50,8 +50,6 @@ func process(config common.Config) {
 		certs, key, err := acme.RequestCertificate(config.DNSNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 		if err != nil {
 			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
-			// request failed - TODO handle
-			panic(err)
 		}
 
 		err = webServer.SetCert(certs, key)
@@ -63,7 +61,7 @@ func process(config common.Config) {
 	if needOCSP {
 		ocspResponse, err := ocsp.GetOCSPResponse(config.CertFile)
 		if err != nil {
-			panic(err) // TODO
+			log.Fatalf("Requesting new OCSP response for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
 		}
 
 		err = webServer.SetOCSP(ocspResponse)
@@ -75,8 +73,7 @@ func process(config common.Config) {
 	if needCert || needOCSP {
 		err := webServer.UpdateServer()
 		if err != nil {
-			panic(err) // TODO
-			// differentiate: server not reached; server responded with known error; server responded unkown error
+			log.Fatalf("Error updating web server: %s", err.Error())
 		}
 	}
 }
