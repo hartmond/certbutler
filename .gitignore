@@ -3,3 +3,4 @@
 *.key
 *.yaml
 !config.yaml
+!docker-compose.yaml

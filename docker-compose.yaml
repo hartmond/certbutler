@@ -1,0 +1,31 @@
+version: '3'
+services:
+  server:
+    image: "haproxy:latest"
+    container_name: "haproxy_server"
+    restart: always
+    networks:
+      default:
+    volumes:
+      - /data/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - /data/haproxy/certificate:/certificates:ro
+      - socket-volume:/run/haproxy
+    ports:
+      - "80:80"
+      - "443:443"
+  certbutler:
+    image: "hartmond/certbutler:latest"
+    container_name: "haproxy_certbutler"
+    depends_on:
+      - server
+    environment:
+      - certbutlerconfig=/config/config.yaml
+    volumes: 
+      - /data/haproxy/certbutler:/config:ro
+      - /data/haproxy/certificate:/certificates
+      - socket-volume:/haproxy
+    ports:
+      - "53:53/udp"
+
+volumes:
+  socket-volume:
