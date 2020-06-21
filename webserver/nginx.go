@@ -3,6 +3,7 @@ package webserver
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"os/exec"
 
 	"felix-hartmond.de/projects/certbutler/common"
 )
@@ -40,6 +41,6 @@ func (server *NginxInteraction) SetOCSP([]byte) error {
 
 // UpdateServer triggers the nginx process to reload to load the new certificate
 func (server *NginxInteraction) UpdateServer() error {
-	// TODO reload server
-	return nil
+	//https://docs.nginx.com/nginx/admin-guide/basic-functionality/runtime-control/
+	return exec.Command("nginx", "-s", "reload").Run()
 }
