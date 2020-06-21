@@ -6,9 +6,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"felix-hartmond.de/projects/certbutler/common"
 )

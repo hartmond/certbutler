@@ -1,9 +1,10 @@
 package scheduler
 
 import (
-	"log"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"felix-hartmond.de/projects/certbutler/acme"
 	"felix-hartmond.de/projects/certbutler/common"

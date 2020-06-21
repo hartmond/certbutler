@@ -5,13 +5,13 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"fmt"
-	"log"
 	"time"
 
-	"crypto/x509"
+	log "github.com/sirupsen/logrus"
 
 	"felix-hartmond.de/projects/certbutler/common"
 	"golang.org/x/crypto/acme"

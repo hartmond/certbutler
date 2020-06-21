@@ -2,7 +2,8 @@ package webserver
 
 import (
 	"crypto/ecdsa"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 
 	"felix-hartmond.de/projects/certbutler/common"
 )

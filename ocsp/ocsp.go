@@ -3,9 +3,10 @@ package ocsp
 import (
 	"bytes"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"felix-hartmond.de/projects/certbutler/common"
 
