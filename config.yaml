@@ -9,6 +9,8 @@ dnsnames:
 - '*.example.com'
 muststaple: true
 acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
+# For production (real certificates):
+# acmedirectory: https://acme-v02.api.letsencrypt.org/directory
 acmeaccountfile: acmeKey.pem
 regsiteracme: true
 
