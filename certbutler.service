@@ -1,0 +1,8 @@
+[Unit]
+Description=certbutler
+After=network.target
+[Service]
+Type=simple
+ExecStart=certbutler /etc/certbutler/config.yaml
+[Install]
+WantedBy=multi-user.target

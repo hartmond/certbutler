@@ -32,7 +32,14 @@ In this case, one config file per certificate has to be provided.
 The list of config files can also be provided via an environment variable ``certbutlerconfig=<config1>.yaml,<config2>.yaml``.
 This can be used when using the Docker container.
 
-In the future, there will also be a systemd service file for deployment.
+### Systemd service
+
+- This assumes that you have your config in `/etc/certbutler/config.yaml`, otherwise adapt the config path in the service file.
+- Copy `certbutler.service` and `certbutler.timer` to `/etc/systemd/system/`
+- `systemctl daemon-reload`
+- `systemctl enable --now certbutler.timer`
+
+From now on, a daily systemd timer will run certbutler.
 
 ## Webserver integration
 There are modes for haproxy and nginx.
