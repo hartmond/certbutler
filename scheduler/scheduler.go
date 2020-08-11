@@ -59,6 +59,8 @@ func process(config common.Config) {
 			log.Fatalf("Writing ceritifcate to disk failed with error %s", err.Error())
 		}
 		log.Println("Certificate renewed successfully")
+	} else {
+		log.Println("Certificate still valid, not renewing")
 	}
 
 	if needOCSP {
@@ -73,6 +75,10 @@ func process(config common.Config) {
 			log.Fatalf("Writing OCSP response to disk failed with error %s", err.Error())
 		}
 		log.Println("OCSP response renewed successfully")
+	} else {
+		if handleOCSP {
+			log.Println("OCSP response still valid, not renewing")
+		}
 	}
 
 	if needCert || needOCSP {
@@ -81,5 +87,7 @@ func process(config common.Config) {
 		if err != nil {
 			log.Fatalf("Error updating web server: %s", err.Error())
 		}
+	} else {
+		log.Println("No changes, not reloading the web server config")
 	}
 }
