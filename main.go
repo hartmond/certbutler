@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/scheduler"
 	"gopkg.in/yaml.v3"
@@ -14,6 +16,7 @@ import (
 func main() {
 	configs := []common.Config{}
 	for _, filename := range getConfigFiles() {
+		log.Printf("Parsing config: %s", filename)
 		yamlBytes, err := ioutil.ReadFile(filename)
 		if err != nil {
 			panic(err)

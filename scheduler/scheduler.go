@@ -48,6 +48,7 @@ func process(config common.Config) {
 	needOCSP := handleOCSP && (needCert || ocsp.CheckOCSPRenew(config)) // has ocsp to be renewed?
 
 	if needCert {
+		log.Println("Certificate needs renewal")
 		certs, key, err := acme.RequestCertificate(config.DNSNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
 		if err != nil {
 			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
@@ -57,9 +58,11 @@ func process(config common.Config) {
 		if err != nil {
 			log.Fatalf("Writing ceritifcate to disk failed with error %s", err.Error())
 		}
+		log.Println("Certificate renewed successfully")
 	}
 
 	if needOCSP {
+		log.Println("OCSP response needs renewal")
 		ocspResponse, err := ocsp.GetOCSPResponse(config.CertFile)
 		if err != nil {
 			log.Fatalf("Requesting new OCSP response for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
@@ -69,9 +72,11 @@ func process(config common.Config) {
 		if err != nil {
 			log.Fatalf("Writing OCSP response to disk failed with error %s", err.Error())
 		}
+		log.Println("OCSP response renewed successfully")
 	}
 
 	if needCert || needOCSP {
+		log.Println("Reloading web server config due to changes")
 		err := webServer.UpdateServer()
 		if err != nil {
 			log.Fatalf("Error updating web server: %s", err.Error())
