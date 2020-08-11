@@ -1,17 +1,33 @@
 # TIMING CONFIGURATION
-runintervalminutes: 0
+
+# If runintervalminutes != 0, certbutler keeps running
+# and checks for renewal every n minutes. 
+# Set this to 0 if you intend to call certbutler regularly
+# by other means, e.g. cron or systemd timer
+runintervalminutes: 0 
+# renewalduecert specifies when to renew the cert in days
 renewalduecert: 14
+# renewaldueocsp is only relevant for haproxy. 
+# Specifies when to renew the ocsp response in days
 renewaldueocsp: 14
 
 # CERTIFICATE CONFIGURATION
+# Make sure to have _acme-challenge NS DNS entry for all 
+# given domains pointed to this server
 dnsnames:
 - example.com
 - '*.example.com'
-muststaple: true
-acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
+# If muststaple is true, you have to configure your web server accordingly
+# to send ocsp responses. 
+muststaple: true 
+# acmedirectory specifies the letsencrypt endpoint that is queried to issue certificates.
+# This is staging which does not issue trusted certificates, but has more relaxed rate 
+# limits so you can test everything before going into production (this is what certbot's 
+# dry run implicitly does)
 # For production (real certificates):
 # acmedirectory: https://acme-v02.api.letsencrypt.org/directory
-acmeaccountfile: acmeKey.pem
+acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
+acmeaccountfile: /etc/certbutler/acmeKey.pem
 regsiteracme: true
 
 # WEBSERVER CONFIGURATION (FOR HAPROXY)
@@ -21,5 +37,5 @@ haproxysocket: /run/haproxy/admin.sock
 
 # WEBSERVER CONFIGURATION (FOR NGINX)
 # mode: nginx
-# certfile: example.com.pem
-# keyfile: example.com.key
+# certfile: /etc/certbutler/example.com.pem
+# keyfile: /etc/certbutler/example.com.key
