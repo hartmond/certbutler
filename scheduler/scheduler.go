@@ -17,10 +17,11 @@ func RunConfig(configs []common.Config) {
 	wg := &sync.WaitGroup{}
 
 	for _, config := range configs {
+		c := config
 		if config.RunIntervalMinutes == 0 {
 			wg.Add(1)
 			go func() {
-				process(config)
+				process(c)
 				wg.Done()
 			}()
 		} else {
@@ -28,7 +29,7 @@ func RunConfig(configs []common.Config) {
 			wg.Add(1) // this will never be set to done -> runs indefinitely
 			go func(waitChannel <-chan time.Time, config common.Config) {
 				for {
-					process(config)
+					process(c)
 					<-waitChannel
 				}
 			}(ticker.C, config)
