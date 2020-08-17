@@ -1,0 +1,9 @@
+---
+# handlers file for certbutler-ansible
+
+- name: 'Enable certbutler timer'
+  systemd:
+    daemon-reload: yes
+    enabled: yes
+    name: certbutler.timer
+    state: started
