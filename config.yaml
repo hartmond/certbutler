@@ -35,9 +35,11 @@ mode: haproxy
 certfile: example.com.pem
 haproxysocket: /run/haproxy/admin.sock
 updateserver: true
+deployhook: ''
 
 # WEBSERVER CONFIGURATION (FOR NGINX)
 # mode: nginx
 # certfile: /etc/certbutler/example.com.pem
 # keyfile: /etc/certbutler/example.com.key
 # updateserver: true
+# deployhook: ''

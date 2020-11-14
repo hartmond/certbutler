@@ -29,6 +29,7 @@ type Config struct {
 	KeyFile       string // used only in nginx mode
 	HAProxySocket string // used only in haproxy mode
 	UpdateServer  bool
+	DeployHook    string
 }
 
 const (

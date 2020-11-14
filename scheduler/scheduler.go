@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"os/exec"
 	"sync"
 	"time"
 
@@ -90,7 +91,14 @@ func process(config common.Config) {
 				log.Fatalf("Error updating web server: %s", err.Error())
 			}
 		}
+		if config.DeployHook != "" {
+			log.Println("Running deploy hook due to changes")
+			err := exec.Command(config.DeployHook).Run()
+			if err != nil {
+				log.Fatalf("Error running deploy hook: %s", err.Error())
+			}
+		}
 	} else {
-		log.Println("No changes, not reloading the web server config")
+		log.Println("No changes, nothing to process")
 	}
 }
