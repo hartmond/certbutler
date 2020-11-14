@@ -28,6 +28,7 @@ type Config struct {
 	CertFile      string // used both in haproxy and nginx mode
 	KeyFile       string // used only in nginx mode
 	HAProxySocket string // used only in haproxy mode
+	UpdateServer  bool
 }
 
 const (

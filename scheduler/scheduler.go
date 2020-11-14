@@ -83,10 +83,12 @@ func process(config common.Config) {
 	}
 
 	if needCert || needOCSP {
-		log.Println("Reloading web server config due to changes")
-		err := webServer.UpdateServer()
-		if err != nil {
-			log.Fatalf("Error updating web server: %s", err.Error())
+		if config.UpdateServer {
+			log.Println("Reloading web server config due to changes")
+			err := webServer.UpdateServer()
+			if err != nil {
+				log.Fatalf("Error updating web server: %s", err.Error())
+			}
 		}
 	} else {
 		log.Println("No changes, not reloading the web server config")
