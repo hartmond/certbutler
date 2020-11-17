@@ -149,7 +149,7 @@ func WriteCertToFile(certs [][]byte, key *ecdsa.PrivateKey, certFile, keyFile st
 			return err
 		}
 	} else {
-		err := SaveToPEMFile(certFile, key, nil)
+		err := SaveToPEMFile(certFile, nil, certs)
 		if err != nil {
 			return err
 		}
