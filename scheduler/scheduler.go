@@ -50,7 +50,7 @@ func RunConfig(configs []common.Config) {
 }
 
 func process(config common.Config) {
-	log.Println("Starting Run")
+	log.Info("Starting Run")
 
 	updateResultData := common.UpdateResultData{}
 
@@ -59,53 +59,50 @@ func process(config common.Config) {
 	needOCSP := config.Timing.RenewalDueOCSP > 0 && (needCert || ocsp.CheckOCSPRenew(config.Files.CertFile, config.Timing.RenewalDueOCSP)) // has ocsp to be renewed?
 
 	if needCert {
-		log.Println("Certificate needs renewal")
+		log.Info("Certificate needs renewal")
 
 		// Request certificate
 		certs, key, err := acme.RequestCertificate(config.Certificate)
 		if err != nil {
-			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.Certificate.DNSNames), err.Error())
+			log.Warnf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.Certificate.DNSNames), err.Error())
+		} else {
+			// Write Certificate to file
+			err = common.WriteCertToFile(certs, key, config.Files.CertFile, config.Files.KeyFile, config.Files.SingleFile)
+			if err != nil {
+				log.Fatalf("Writing ceritifcate to disk failed with error %s", err.Error())
+			}
+			log.Info("Certificate renewed and stored to file successfully")
+
+			// Stage Certificate for updates
+			updateResultData.Certificates = certs
+			updateResultData.Key = key
 		}
-
-		log.Println("Certificate renewed successfully")
-
-		// Write Certificate to file
-		err = common.WriteCertToFile(certs, key, config.Files.CertFile, config.Files.KeyFile, config.Files.SingleFile)
-		if err != nil {
-			log.Fatalf("Writing ceritifcate to disk failed with error %s", err.Error())
-		}
-
-		// Stage Certificate for updates
-		updateResultData.Certificates = certs
-		updateResultData.Key = key
-
 	} else {
 		if config.Timing.RenewalDueCert > 0 {
-			log.Println("Certificate still valid, not renewing")
+			log.Info("Certificate still valid, not renewing")
 		}
 	}
 
 	if needOCSP {
-		log.Println("OCSP response needs renewal")
+		log.Info("OCSP response needs renewal")
 		ocspResponse, err := ocsp.GetOCSPResponse(config.Files.CertFile)
 		if err != nil {
-			log.Fatalf("Requesting new OCSP response for %s failed with error %s", common.FlattenStringSlice(config.Certificate.DNSNames), err.Error())
+			log.Warnf("Requesting new OCSP response for %s failed with error %s", common.FlattenStringSlice(config.Certificate.DNSNames), err.Error())
+		} else {
+
+			// Store OCSP response in file
+			err = ioutil.WriteFile(config.Files.CertFile+".ocsp", ocspResponse, os.FileMode(int(0600)))
+			if err != nil {
+				log.Fatalf("Writing OCSP response to disk failed with error %s", err.Error())
+			}
+			log.Info("OCSP response renewed successfully")
+
+			// Stage ocsp response for updates
+			updateResultData.OCSPResponse = ocspResponse
 		}
-
-		log.Println("OCSP response renewed successfully")
-
-		// Store OCSP response in file
-		err = ioutil.WriteFile(config.Files.CertFile+".ocsp", ocspResponse, os.FileMode(int(0600)))
-		if err != nil {
-			log.Fatalf("Writing OCSP response to disk failed with error %s", err.Error())
-		}
-
-		// Stage ocsp response for updates
-		updateResultData.OCSPResponse = ocspResponse
-
 	} else {
 		if config.Timing.RenewalDueOCSP > 0 {
-			log.Println("OCSP response still valid, not renewing")
+			log.Info("OCSP response still valid, not renewing")
 		}
 	}
 
@@ -131,6 +128,6 @@ func process(config common.Config) {
 			}
 		}
 	} else {
-		log.Println("No changes, nothing to process")
+		log.Info("No changes, nothing to process")
 	}
 }
