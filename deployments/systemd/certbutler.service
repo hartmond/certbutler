@@ -1,0 +1,15 @@
+[Unit]
+Description=Certbutler ACME client
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+WorkingDirectory=/etc/nginx/certificate
+ExecStart=certbutler example.com.yaml
+
+[Install]
+WantedBy=multi-user.target
