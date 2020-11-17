@@ -49,17 +49,17 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 }
 
 // RequestCertificate runs the acme flow to request a certificate with the desired contents
-func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, acmeDirectory string, registerIfMissing bool) ([][]byte, *ecdsa.PrivateKey, error) {
+func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]byte, *ecdsa.PrivateKey, error) {
 	ctx := context.Background()
 	var client *acme.Client
 	var err error
 
-	client, err = loadAccount(ctx, accountFile, acmeDirectory)
+	client, err = loadAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory)
 	if err != nil {
-		if !registerIfMissing {
+		if !certificateConfig.RegsiterAcme {
 			return nil, nil, err
 		}
-		client, err = registerAccount(ctx, accountFile, acmeDirectory)
+		client, err = registerAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -67,7 +67,7 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 
 	log.Println("Sending AuthorizeOrder Request")
 
-	order, err := client.AuthorizeOrder(ctx, acme.DomainIDs(dnsNames...))
+	order, err := client.AuthorizeOrder(ctx, acme.DomainIDs(certificateConfig.DNSNames...))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -141,10 +141,10 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 	}
 
 	req := &x509.CertificateRequest{
-		DNSNames: dnsNames,
+		DNSNames: certificateConfig.DNSNames,
 	}
 
-	if mustStaple {
+	if certificateConfig.MustStaple {
 		req.ExtraExtensions = append(req.ExtraExtensions, pkix.Extension{
 			Id:    asn1.ObjectIdentifier{1, 3, 6, 1, 5, 5, 7, 1, 24},
 			Value: []byte{0x30, 0x03, 0x02, 0x01, 0x05},
@@ -167,14 +167,14 @@ func RequestCertificate(dnsNames []string, accountFile string, mustStaple bool, 
 }
 
 // CheckCertRenew checks if the stored certficate exists and is still longer valid than renewalduecert from config
-func CheckCertRenew(config common.Config) bool {
-	cert, err := common.LoadCertFromPEMFile(config.CertFile, 0)
+func CheckCertRenew(certFile string, renewalDueCert int) bool {
+	cert, err := common.LoadCertFromPEMFile(certFile, 0)
 	if err != nil {
 		// no or invalid certificate => request cert
 		return true
 	}
 
-	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(config.RenewalDueCert*24)*time.Hour {
+	if remainingValidity := time.Until(cert.NotAfter); remainingValidity < time.Duration(renewalDueCert*24)*time.Hour {
 		return true
 	}
 

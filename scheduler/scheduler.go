@@ -1,7 +1,8 @@
 package scheduler
 
 import (
-	"os/exec"
+	"io/ioutil"
+	"os"
 	"sync"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"felix-hartmond.de/projects/certbutler/acme"
 	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/ocsp"
-	"felix-hartmond.de/projects/certbutler/webserver"
+	"felix-hartmond.de/projects/certbutler/postprocessing"
 )
 
 // RunConfig starts cerbutler tasked based on a configuration
@@ -19,14 +20,23 @@ func RunConfig(configs []common.Config) {
 
 	for _, config := range configs {
 		c := config
-		if config.RunIntervalMinutes == 0 {
+
+		if config.HaProxy.HAProxySocket != "" && !config.Files.SingleFile {
+			log.Warn("HaProxy post-processor is enabled but certificate and key are stored in two files. This combination usually does not work.")
+		}
+
+		if config.Nginx.ReloadNginx && config.Files.SingleFile {
+			log.Warn("Nginx post-processor is enabled but certificate and key are stored in one combined file. This combination usually does not work.")
+		}
+
+		if config.Timing.RunIntervalMinutes == 0 {
 			wg.Add(1)
 			go func() {
 				process(c)
 				wg.Done()
 			}()
 		} else {
-			ticker := time.NewTicker(time.Duration(config.RunIntervalMinutes) * time.Minute)
+			ticker := time.NewTicker(time.Duration(config.Timing.RunIntervalMinutes) * time.Minute)
 			wg.Add(1) // this will never be set to done -> runs indefinitely
 			go func(waitChannel <-chan time.Time, config common.Config) {
 				for {
@@ -42,60 +52,80 @@ func RunConfig(configs []common.Config) {
 func process(config common.Config) {
 	log.Println("Starting Run")
 
-	webServer := webserver.New(config)
+	updateResultData := common.UpdateResultData{}
 
 	// check tasks for this run
-	handleCert, handleOCSP := webServer.GetRequirements()               // which parts should certbutler handle
-	needCert := handleCert && acme.CheckCertRenew(config)               // has the certificate to be renewed?
-	needOCSP := handleOCSP && (needCert || ocsp.CheckOCSPRenew(config)) // has ocsp to be renewed?
+	needCert := config.Timing.RenewalDueCert > 0 && acme.CheckCertRenew(config.Files.CertFile, config.Timing.RenewalDueCert)               // has the certificate to be renewed?
+	needOCSP := config.Timing.RenewalDueOCSP > 0 && (needCert || ocsp.CheckOCSPRenew(config.Files.CertFile, config.Timing.RenewalDueOCSP)) // has ocsp to be renewed?
 
 	if needCert {
 		log.Println("Certificate needs renewal")
-		certs, key, err := acme.RequestCertificate(config.DNSNames, config.AcmeAccountFile, config.MustStaple, config.AcmeDirectory, config.RegsiterAcme)
+
+		// Request certificate
+		certs, key, err := acme.RequestCertificate(config.Certificate)
 		if err != nil {
-			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
+			log.Fatalf("Requesting certificate for %s failed with error %s", common.FlattenStringSlice(config.Certificate.DNSNames), err.Error())
 		}
 
-		err = webServer.SetCert(certs, key)
+		log.Println("Certificate renewed successfully")
+
+		// Write Certificate to file
+		err = common.WriteCertToFile(certs, key, config.Files.CertFile, config.Files.KeyFile, config.Files.SingleFile)
 		if err != nil {
 			log.Fatalf("Writing ceritifcate to disk failed with error %s", err.Error())
 		}
-		log.Println("Certificate renewed successfully")
+
+		// Stage Certificate for updates
+		updateResultData.Certificates = certs
+		updateResultData.Key = key
+
 	} else {
 		log.Println("Certificate still valid, not renewing")
 	}
 
 	if needOCSP {
 		log.Println("OCSP response needs renewal")
-		ocspResponse, err := ocsp.GetOCSPResponse(config.CertFile)
+		ocspResponse, err := ocsp.GetOCSPResponse(config.Files.CertFile)
 		if err != nil {
-			log.Fatalf("Requesting new OCSP response for %s failed with error %s", common.FlattenStringSlice(config.DNSNames), err.Error())
+			log.Fatalf("Requesting new OCSP response for %s failed with error %s", common.FlattenStringSlice(config.Certificate.DNSNames), err.Error())
 		}
 
-		err = webServer.SetOCSP(ocspResponse)
+		log.Println("OCSP response renewed successfully")
+
+		// Store OCSP response in file
+		err = ioutil.WriteFile(config.Files.CertFile+".ocsp", ocspResponse, os.FileMode(int(0600)))
 		if err != nil {
 			log.Fatalf("Writing OCSP response to disk failed with error %s", err.Error())
 		}
-		log.Println("OCSP response renewed successfully")
+
+		// Stage ocsp response for updates
+		updateResultData.OCSPResponse = ocspResponse
+
 	} else {
-		if handleOCSP {
+		if config.Timing.RenewalDueOCSP > 0 {
 			log.Println("OCSP response still valid, not renewing")
 		}
 	}
 
 	if needCert || needOCSP {
-		if config.UpdateServer {
-			log.Println("Reloading web server config due to changes")
-			err := webServer.UpdateServer()
+		if config.HaProxy.HAProxySocket != "" {
+			err := postprocessing.ProcessHaProxy(config.HaProxy, config.Files, updateResultData)
 			if err != nil {
-				log.Fatalf("Error updating web server: %s", err.Error())
+				log.Fatalf("Error updating haproxy: %s", err.Error())
 			}
 		}
-		if config.DeployHook != "" {
-			log.Println("Running deploy hook due to changes")
-			err := exec.Command(config.DeployHook).Run()
+
+		if false {
+			err := postprocessing.ProcessNginx()
 			if err != nil {
-				log.Fatalf("Error running deploy hook: %s", err.Error())
+				log.Fatalf("Error updating nginx: %s", err.Error())
+			}
+		}
+
+		if config.DeployHook.Executable != "" {
+			err := postprocessing.ProcessDeployHook(config.DeployHook)
+			if err != nil {
+				log.Fatalf("Error updating nginx: %s", err.Error())
 			}
 		}
 	} else {

@@ -12,26 +12,6 @@ import (
 	"strings"
 )
 
-// Config is the struct holding all configuration for a certificate. The config file is parsed into this struct.
-type Config struct {
-	RunIntervalMinutes int
-	RenewalDueCert     int // remaining valid days of the certitifcate before renew
-	RenewalDueOCSP     int // remaining valid days of the OCSP response before renew
-
-	DNSNames        []string
-	MustStaple      bool
-	AcmeDirectory   string
-	AcmeAccountFile string
-	RegsiterAcme    bool
-
-	Mode          string
-	CertFile      string // used both in haproxy and nginx mode
-	KeyFile       string // used only in nginx mode
-	HAProxySocket string // used only in haproxy mode
-	UpdateServer  bool
-	DeployHook    string
-}
-
 const (
 	pemTypeKey  = "EC PRIVATE KEY"
 	pemTypeCert = "CERTIFICATE"
@@ -158,4 +138,25 @@ func FlattenStringSlice(stringSlice []string) string {
 	}
 	flattened = flattened[:len(flattened)-1] // Remove trailing comma
 	return flattened
+}
+
+// WriteCertToFile writes Certificates and Key to PEM Files
+// When singleFile is true, cert and key are bothes stored in certFile, otherwise they are stored in two sepearate files
+func WriteCertToFile(certs [][]byte, key *ecdsa.PrivateKey, certFile, keyFile string, singleFile bool) error {
+	if singleFile {
+		err := SaveToPEMFile(certFile, key, certs)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := SaveToPEMFile(certFile, key, nil)
+		if err != nil {
+			return err
+		}
+		err = SaveToPEMFile(keyFile, key, nil)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

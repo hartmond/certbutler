@@ -47,13 +47,13 @@ func GetOCSPResponse(certfile string) ([]byte, error) {
 }
 
 // LoadFromFile loads and parsesn an OCSP Response from a file
-func LoadFromFile(certfile string) (*ocsp.Response, error) {
-	rawOCSPBytes, err := ioutil.ReadFile(certfile + ".ocsp")
+func LoadFromFile(certFile string) (*ocsp.Response, error) {
+	rawOCSPBytes, err := ioutil.ReadFile(certFile + ".ocsp")
 	if err != nil {
 		return nil, err
 	}
 
-	issueCert, err := common.LoadCertFromPEMFile(certfile, 1)
+	issueCert, err := common.LoadCertFromPEMFile(certFile, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +62,14 @@ func LoadFromFile(certfile string) (*ocsp.Response, error) {
 }
 
 // CheckOCSPRenew checks if a prepared OCSP response exists and if it is still longer valid than renewaldueocsp from config
-func CheckOCSPRenew(config common.Config) bool {
-	ocsp, err := LoadFromFile(config.CertFile)
+func CheckOCSPRenew(certFile string, renewalDueOCSP int) bool {
+	ocsp, err := LoadFromFile(certFile)
 	if err != nil {
 		// ocsp missing or not valid => renew ocsp
 		return true
 	}
 
-	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(config.RenewalDueOCSP*24)*time.Hour {
+	if remainingValidity := time.Until(ocsp.NextUpdate); remainingValidity < time.Duration(renewalDueOCSP*24)*time.Hour {
 		// ocsp expires soon (in 3 days) => renew ocsp
 		return true
 	}
