@@ -2,8 +2,7 @@
 
 The CertBulter takes care of your certificates.
 It is an ACME client that requests and renews certificates with dns-01 challenges.
-When used with haproxy it also handles the renew of OCSP responses for stapling.
-In the future, CertButler will also allow basic CT log monitoring.
+It can also fetch and store OCSP responses for stapling.
 
 ## Why another ACME client
 
