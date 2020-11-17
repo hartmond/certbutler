@@ -80,7 +80,9 @@ func process(config common.Config) {
 		updateResultData.Key = key
 
 	} else {
-		log.Println("Certificate still valid, not renewing")
+		if config.Timing.RenewalDueCert > 0 {
+			log.Println("Certificate still valid, not renewing")
+		}
 	}
 
 	if needOCSP {
