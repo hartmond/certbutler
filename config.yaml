@@ -37,7 +37,7 @@ certificate:
     # acmeaccountfile specifies the file storing the keypair used as identity agains the
     # acme server. If registeracme is set to true, a new identity will be created and 
     # registed none is provided or the provided identity is invalid for the acme server.
-    acmeaccountfile: ""
+    acmeaccountfile: "/etc/certbutler/acmeKey.pem"
     regsiteracme: false
 
 # OUTPUT FILES CONFIGURATION
@@ -46,15 +46,15 @@ files:
     # (as needed for e.g. haproxy). Keyfile is ignored in this case.
     # Otherwise certificate and key will be stored in two  files (as needed for e.g. nginx)
     singlefile: false
-    certfile: ""
-    keyfile: ""
+    certfile: "example.com.pem"
+    keyfile: "example.com.key"
 
 # POST-PROCESSOR CONFIGURATIONS
 
 # HAPROXY UPDATES
 # Remove or leave empty to disable haproxy updates 
 # haproxy:
-#    haproxysocket: ""
+#    haproxysocket: "/run/haproxy/admin.sock"
 
 # NGINX RELOAD
 # Remove or set false to disable nginx updates 
