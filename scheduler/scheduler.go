@@ -114,7 +114,7 @@ func process(config common.Config) {
 			}
 		}
 
-		if false {
+		if config.Nginx.ReloadNginx {
 			err := postprocessing.ProcessNginx()
 			if err != nil {
 				log.Fatalf("Error updating nginx: %s", err.Error())
