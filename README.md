@@ -103,3 +103,7 @@ The DNS validation seems to have problems.
 Double-check if the "_acme-challenge" DNS records are set correctly and wheather DNS requests can reach certbutler (is port 53/udp open in the firewall).
 You can debug connectivity issues by watching for the incomming requests from the acme endpoint (e.g. with tcpdump/wireshark).
 If no request reach your host check if the NS records have successfully propagated (maybe wait a day) and wheather you can  resolve the TXT records hosted by certbutler yourself from another server.
+
+**Your binary fails on linux because of a missing glibc library**
+
+Compile with `CGO_ENABLED=0` environment variable to create a pure go binary.
