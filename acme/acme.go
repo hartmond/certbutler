@@ -84,7 +84,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 		}
 
 		if authz.Status == acme.StatusValid {
-			log.Println(authz.Identifier.Value + " alredy authorized")
+			log.Println(authz.Identifier.Value + " already authorized")
 			// Already authorized.
 			continue
 		}
@@ -115,7 +115,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 		// Preparing authorizations - Start DNS server
 		closeServer := hostDNS(dnsTokens)
 
-		log.Println("Accepting pendig challenges")
+		log.Println("Accepting pending challenges")
 		for _, chal := range pendigChallenges {
 			if _, err := client.Accept(ctx, chal); err != nil {
 				return nil, nil, fmt.Errorf("dns-01 accept for %q: %v", chal, err)
@@ -166,7 +166,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 	return crts, key, nil
 }
 
-// CheckCertRenew checks if the stored certficate exists and is still longer valid than renewalduecert from config
+// CheckCertRenew checks if the stored certificate exists and is still longer valid than renewalduecert from config
 func CheckCertRenew(certFile string, renewalDueCert int) bool {
 	cert, err := common.LoadCertFromPEMFile(certFile, 0)
 	if err != nil {

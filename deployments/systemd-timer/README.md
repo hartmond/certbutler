@@ -1,6 +1,6 @@
 # Systemd service (timer)
 
-These files configure a systemd timer to certbutler regulary.
+These files configure a systemd timer to certbutler regularly.
 
 For this deployment type, `runintervalminutes` in the configuration files has to be set to `0` as systemd takes care of the regular runs.
 

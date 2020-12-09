@@ -33,18 +33,18 @@ This can be used when using the Docker container.
 
 ## General Flow
 
-Each time certbutler runs (via internal scheduler or manual run) the follwing steps happen:
+Each time certbutler runs (via internal scheduler or manual run) the following steps happen:
 
-### 1. Examination of nessessary tasks
+### 1. Examination of necessary tasks
 
-First Cerbutler checks wheater certificate and/or OCSP resonse have to be updated.
+First Cerbutler checks wheater certificate and/or OCSP response have to be updated.
 Therefore, the current expirateion dates and the configuration options are checked
 
 ### 2. Updates and writing to files
 
-When nessessary, Certificate and/or OCSP response are updated and the new versions are written to file.
-Depending on the configuration Certificate and Key are stored either in one cobined or in two sepearte files.
-If the target files already exist (e.g. old version of the certificate), the old files are renamed with a numer suffix.
+When necessary, Certificate and/or OCSP response are updated and the new versions are written to file.
+Depending on the configuration Certificate and Key are stored either in one cobined or in two separate files.
+If the target files already exist (e.g. old version of the certificate), the old files are renamed with a number suffix.
 
 ### 3. Post-Processing is done
 
@@ -58,8 +58,8 @@ Currently, the following post-processors are available:
 ### haproxy
 The haproxy post-processor will use the nginx admin socket to send new certificates and/or OCSP responses to a running haproxy process.
 
-For this to work successfully, different requierments have to be fullfilled:
-- certbulter should be configued to store certificate an key in one file as this is the format used by haproxy
+For this to work successfully, different requierments have to be fulfilled:
+- certbulter should be configured to store certificate an key in one file as this is the format used by haproxy
 - the admin socket has to be accessible by certbulter (correct unix permissions / placed in a volume to share between containers)
 - the certificate file path has to be identical in the certbutler and the haproxy configuration
 - haproxy has to be already started with a certificate/OCSP response (the socket only allows updates, not new installs)
@@ -74,17 +74,17 @@ As nginx expects certificate and key in different files `single` should be set t
 
 Nginx can gather OCSP responses itself as well as utilize a prepared response from a file.
 If nginx's own mechanism should be used, `renewaldueocsp` in the cerbutler configuration can be set to `0` to disable OCSP response updates.
-If prepared ones should be used, nginx can be configued to use the ones created by cerbutler with the config opion `ssl_stapling_file `.
-This can be handy when `muststaple` is enabled as nginx with its own mechanism sends the first anwser after a restart without a stapled OCSP response.
+If prepared ones should be used, nginx can be configured to use the ones created by cerbutler with the config option `ssl_stapling_file `.
+This can be handy when `muststaple` is enabled as nginx with its own mechanism sends the first answer after a restart without a stapled OCSP response.
 
 ### deploy-hook
 The deploy hook post-processor runs a executable defined in the configuration file.
 For example, it can be used to update the new certificate if the webserver has to be updated in a special way (e.g. it runs on another host) or if the updated certificate has to be copied to other cluster nodes in addition to local webserver update.
 
 ## Run as service / Deployment
-There are different ways/components to run certbutler as a serivce.
+There are different ways/components to run certbutler as a service.
 Varios options can be found in the deployments folder:
-- [Docker conainer with docker-compose for use with haproxy](deployments/docker/README.md)
+- [Docker container with docker-compose for use with haproxy](deployments/docker/README.md)
 - [Systemd-Service](deployments/systemd/README.md)
 - [Systemd-Service with Timer](deployments/systemd-timer/README.md)
 - [Ansible playbook for systemd deployment](deployments/ansible/README.md)
@@ -100,9 +100,9 @@ Maybe the identations of the config blocks are are wrong or a string with specia
 **It does not work / Nothing happens after "Waiting for authorizations..."**
 
 The DNS validation seems to have problems.
-Double-check if the "_acme-challenge" DNS records are set correctly and wheather DNS requests can reach certbutler (is port 53/udp open in the firewall).
-You can debug connectivity issues by watching for the incomming requests from the acme endpoint (e.g. with tcpdump/wireshark).
-If no request reach your host check if the NS records have successfully propagated (maybe wait a day) and wheather you can  resolve the TXT records hosted by certbutler yourself from another server.
+Double-check if the "_acme-challenge" DNS records are set correctly and whether DNS requests can reach certbutler (is port 53/udp open in the firewall).
+You can debug connectivity issues by watching for the incoming requests from the acme endpoint (e.g. with tcpdump/wireshark).
+If no request reach your host check if the NS records have successfully propagated (maybe wait a day) and whether you can  resolve the TXT records hosted by certbutler yourself from another server.
 
 **Your binary fails on linux because of a missing glibc library**
 

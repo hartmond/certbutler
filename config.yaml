@@ -34,10 +34,10 @@ certificate:
     # acmedirectory: https://acme-v02.api.letsencrypt.org/directory
     acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
 
-    # acmeaccountfile specifies the file storing the keypair used as identity agains the
+    # acmeaccountfile specifies the file storing the key pair used as identity against the
     # acme server. If registeracme is set to true, a new identity will be created and 
-    # registed if the file does not exists or its content cannot be used for any reason
-    # (e.g. content not parsabe as key; key not registered with choosen acme server).
+    # registered if the file does not exists or its content cannot be used for any reason
+    # (e.g. content not parsabe as key; key not registered with chosen acme server).
     acmeaccountfile: "/etc/certbutler/acmeKey.pem"
     registeracme: false
 

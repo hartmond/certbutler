@@ -12,7 +12,7 @@ type Config struct {
 	DeployHook  DeployHookConfiguration
 }
 
-// TimingConfiguration stores the vaules defining scheduling and due dates
+// TimingConfiguration stores the values defining scheduling and due dates
 type TimingConfiguration struct {
 	RunIntervalMinutes int
 	RenewalDueCert     int // remaining valid days of the certitifcate before renew; set to 0 to disable Certificate refresh
@@ -35,17 +35,17 @@ type FilesConfiguration struct {
 	KeyFile    string // store cert and key in two files (for e.g. nginx)
 }
 
-// HaProxyConfiguration stores wheather and how certbutler interacts with haproxy
+// HaProxyConfiguration stores whether and how certbutler interacts with haproxy
 type HaProxyConfiguration struct {
 	HAProxySocket string // leave empty to disable haproxy interaction
 }
 
-// NginxConfiguration stores wheather and how certbutler interacts with nginx
+// NginxConfiguration stores whether and how certbutler interacts with nginx
 type NginxConfiguration struct {
 	ReloadNginx bool // set false und leave unset to disable nginx reload
 }
 
-// DeployHookConfiguration stores wheather and which deployhook is run by certbutler
+// DeployHookConfiguration stores whether and which deployhook is run by certbutler
 type DeployHookConfiguration struct {
 	Executable string // Leave empyty to disable deploy hook execution
 }

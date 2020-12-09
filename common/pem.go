@@ -141,7 +141,7 @@ func FlattenStringSlice(stringSlice []string) string {
 }
 
 // WriteCertToFile writes Certificates and Key to PEM Files
-// When singleFile is true, cert and key are bothes stored in certFile, otherwise they are stored in two sepearate files
+// When singleFile is true, cert and key are bothes stored in certFile, otherwise they are stored in two separate files
 func WriteCertToFile(certs [][]byte, key *ecdsa.PrivateKey, certFile, keyFile string, singleFile bool) error {
 	if singleFile {
 		err := SaveToPEMFile(certFile, key, certs)

@@ -22,7 +22,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 
 	if updateResult.Key != nil {
 		// both new Certificte and new OCPS response
-		log.Println("Updateing Certificate and OCSP response over haproxy socket")
+		log.Println("Updating Certificate and OCSP response over haproxy socket")
 
 		// abort potenitally running transaction
 		result, err := sendCommand(fmt.Sprintf("abort ssl cert %s\n", filesConfig.CertFile))
@@ -71,7 +71,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 
 	if updateResult.OCSPResponse != nil {
 		// only new OCSP response
-		log.Println("Updateing OCSP response over haproxy socket")
+		log.Println("Updating OCSP response over haproxy socket")
 
 		result, err := sendCommand(fmt.Sprintf("set ssl ocsp-response <<\n%s\n\n", base64.StdEncoding.EncodeToString(updateResult.OCSPResponse)))
 		if err != nil {

@@ -5,7 +5,7 @@ In comparison to the systemd-timer deployment, the internal scheduler of certbut
 
 ## Usage
 
-If you use relative pathes for certificate location (in config file) or for configuration file location (in systemd service file) the WorkingDirectory in the sytemd service file has to be adapted to be adapted that these pathes are correct.
+If you use relative paths for certificate location (in config file) or for configuration file location (in systemd service file) the WorkingDirectory in the systemd service file has to be adapted to be adapted that these paths are correct.
 If configuration file and certificate should be in different folders, an absolute path for the location of the configuration file can be used in the systemd service file.
 
 
