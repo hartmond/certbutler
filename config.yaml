@@ -36,9 +36,10 @@ certificate:
 
     # acmeaccountfile specifies the file storing the keypair used as identity agains the
     # acme server. If registeracme is set to true, a new identity will be created and 
-    # registed none is provided or the provided identity is invalid for the acme server.
+    # registed if the file does not exists or its content cannot be used for any reason
+    # (e.g. content not parsabe as key; key not registered with choosen acme server).
     acmeaccountfile: "/etc/certbutler/acmeKey.pem"
-    regsiteracme: false
+    registeracme: false
 
 # OUTPUT FILES CONFIGURATION
 files:

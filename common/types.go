@@ -25,7 +25,7 @@ type CertificateConfiguration struct {
 	MustStaple      bool
 	AcmeDirectory   string
 	AcmeAccountFile string
-	RegsiterAcme    bool
+	RegisterAcme    bool
 }
 
 // FilesConfiguration stores how received content to files

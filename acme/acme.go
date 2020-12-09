@@ -56,7 +56,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 
 	client, err = loadAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory)
 	if err != nil {
-		if !certificateConfig.RegsiterAcme {
+		if !certificateConfig.RegisterAcme {
 			return nil, nil, err
 		}
 		client, err = registerAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory)
