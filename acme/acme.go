@@ -139,7 +139,18 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 
 	log.Println("Generating PrivateKey and CSR")
 
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	var curve elliptic.Curve
+	switch certificateConfig.EllipticCurve {
+	case "":
+		fallthrough
+	case "P384":
+		curve = elliptic.P384()
+	case "P256":
+		curve = elliptic.P256()
+	default:
+		return nil, nil, fmt.Errorf("invalid EC Curve in configuration: %s, possible values are P256 and P384", certificateConfig.EllipticCurve)
+	}
+	key, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}

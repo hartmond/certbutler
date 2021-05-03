@@ -22,6 +22,7 @@ type TimingConfiguration struct {
 // CertificateConfiguration stores Certificate content ACME account data
 type CertificateConfiguration struct {
 	DNSNames        []string
+	EllipticCurve   string
 	MustStaple      bool
 	AcmeDirectory   string
 	AcmeAccountFile string

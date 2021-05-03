@@ -22,6 +22,10 @@ certificate:
         - 'example.com'
         - '*.example.com'
 
+    # EllipticCurve specifies the Curve Type of the Key.
+    # Valid values are P256 and P384. When not set, P384 is used.
+    ellipticcurve: 'P384'
+
     # If muststaple is true, you have to configure your web server accordingly
     # to send ocsp responses. 
     muststaple: false
@@ -32,14 +36,14 @@ certificate:
     # dry run implicitly does)
     # For production (real certificates):
     # acmedirectory: https://acme-v02.api.letsencrypt.org/directory
-    acmedirectory: https://acme-staging-v02.api.letsencrypt.org/directory
+    acmedirectory: https://0.0.0.0:14000/dir
 
     # acmeaccountfile specifies the file storing the key pair used as identity against the
     # acme server. If registeracme is set to true, a new identity will be created and 
     # registered if the file does not exists or its content cannot be used for any reason
     # (e.g. content not parsabe as key; key not registered with chosen acme server).
     acmeaccountfile: "/etc/certbutler/acmeKey.pem"
-    registeracme: false
+    registeracme: true
 
 # OUTPUT FILES CONFIGURATION
 files:
