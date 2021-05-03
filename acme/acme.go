@@ -23,7 +23,11 @@ func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) 
 		return nil, err
 	}
 
-	client := &acme.Client{Key: akey, DirectoryURL: acmeDirectory}
+	client := &acme.Client{
+		Key:          akey,
+		DirectoryURL: acmeDirectory,
+		UserAgent:    "CertButler/v0.2-dev",
+	}
 	_, err = client.GetReg(ctx, "")
 
 	return client, err
