@@ -14,8 +14,8 @@ import (
 
 // ProcessHaProxy sends the updated certificate and/or OCSP response to haproxy
 func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.FilesConfiguration, updateResult common.UpdateResultData) error {
-	if filesConfig.SingleFile == false {
-		return fmt.Errorf("Updating haproxy aborted as certificate and key are stored in different files (option singleFile in configuration")
+	if !filesConfig.SingleFile {
+		return fmt.Errorf("updating haproxy aborted as certificate and key are stored in different files (option singleFile in configuration")
 	}
 
 	sendCommand := createSendCommandFunc(haConfig.HAProxySocket)
@@ -30,7 +30,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 			return err
 		}
 		if result != fmt.Sprintf("Transaction aborted for certificate %s!\n\n", filesConfig.CertFile) && result != "No ongoing transaction!\n\n" {
-			return fmt.Errorf("Aborting old transaction failed: %s", result)
+			return fmt.Errorf("aborting old transaction failed: %s", result)
 		}
 
 		// add certificate to new transaction
@@ -43,7 +43,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 			return err
 		}
 		if result != fmt.Sprintf("Transaction created for certificate %s!\n\n", filesConfig.CertFile) {
-			return fmt.Errorf("Staging new Certificate in haproxy failed: %s", result)
+			return fmt.Errorf("staging new Certificate in haproxy failed: %s", result)
 		}
 
 		if updateResult.OCSPResponse != nil {
@@ -53,7 +53,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 				return err
 			}
 			if result != fmt.Sprintf("Transaction updated for certificate %s!\n\n", filesConfig.CertFile) {
-				return fmt.Errorf("Staging OCSP response for new certificate in haproxy failed: %s", result)
+				return fmt.Errorf("staging OCSP response for new certificate in haproxy failed: %s", result)
 			}
 		}
 
@@ -63,7 +63,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 			return err
 		}
 		if result != fmt.Sprintf("Committing %s.\nSuccess!\n\n", filesConfig.CertFile) {
-			return fmt.Errorf("Staging OCSP response for new certificate in haproxy failed: %s", result)
+			return fmt.Errorf("staging OCSP response for new certificate in haproxy failed: %s", result)
 		}
 
 		return nil
@@ -96,7 +96,7 @@ func createSendCommandFunc(HAProxySocket string) func(string) (string, error) {
 		}
 		defer conn.Close()
 
-		fmt.Fprintf(conn, command)
+		fmt.Fprint(conn, command)
 
 		result, err := ioutil.ReadAll(bufio.NewReader(conn))
 		if err != nil {

@@ -120,7 +120,7 @@ func loadFromPem(filename, desc string, skip int) ([]byte, error) {
 		var pemBlock *pem.Block
 		pemBlock, pemBytes = pem.Decode(pemBytes)
 		if pemBlock == nil {
-			return nil, fmt.Errorf("No pem block of type %s found after skipping %d blocks of same type", desc, skip)
+			return nil, fmt.Errorf("no pem block of type %s found after skipping %d blocks of same type", desc, skip)
 		}
 		if pemBlock.Type == desc {
 			if skip > 0 {

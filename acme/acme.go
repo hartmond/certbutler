@@ -128,7 +128,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 			}
 		}
 		if chal == nil {
-			return nil, nil, fmt.Errorf("No dns-01 challenge for %q", authURL)
+			return nil, nil, fmt.Errorf("no dns-01 challenge for %q", authURL)
 		}
 
 		val, err := client.DNS01ChallengeRecord(chal.Token)
@@ -156,7 +156,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 		log.Println("Waiting for authorizations...")
 		for _, authURL := range order.AuthzURLs {
 			if _, err := client.WaitAuthorization(ctx, authURL); err != nil {
-				return nil, nil, fmt.Errorf("Authorization for %q failed: %v", authURL, err)
+				return nil, nil, fmt.Errorf("authorization for %q failed: %v", authURL, err)
 			}
 		}
 
