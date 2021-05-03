@@ -17,17 +17,21 @@ import (
 	"golang.org/x/crypto/acme"
 )
 
+func newClient(akey *ecdsa.PrivateKey, acmeDirectory string) *acme.Client {
+	return &acme.Client{
+		Key:          akey,
+		DirectoryURL: acmeDirectory,
+		UserAgent:    "CertButler/v0.2-dev",
+	}
+}
+
 func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) (*acme.Client, error) {
 	akey, err := common.LoadKeyFromPEMFile(accountFile, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	client := &acme.Client{
-		Key:          akey,
-		DirectoryURL: acmeDirectory,
-		UserAgent:    "CertButler/v0.2-dev",
-	}
+	client := newClient(akey, acmeDirectory)
 	_, err = client.GetReg(ctx, "")
 
 	return client, err
@@ -39,7 +43,7 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 		return nil, err
 	}
 
-	client := &acme.Client{Key: akey, DirectoryURL: acmeDirectory}
+	client := newClient(akey, acmeDirectory)
 	_, err = client.Register(ctx, &acme.Account{}, acme.AcceptTOS)
 	if err != nil {
 		return nil, err
