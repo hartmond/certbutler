@@ -34,7 +34,7 @@ func ProcessHaProxy(haConfig common.HaProxyConfiguration, filesConfig common.Fil
 		}
 
 		// add certificate to new transaction
-		certBytes, err := common.EncodePem(updateResult.Key, updateResult.Certificates)
+		certBytes, err := common.EncodePem(updateResult.Key, updateResult.Certificates, "")
 		if err != nil {
 			return err
 		}

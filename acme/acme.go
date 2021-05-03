@@ -32,7 +32,14 @@ func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) 
 	}
 
 	client := newClient(akey, acmeDirectory)
-	_, err = client.GetReg(ctx, "")
+	account, err := client.GetReg(ctx, "")
+
+	if account.Status != "valid" {
+		log.Warnf("ACME login failed. Status of Account %s is %s", account.URI, account.Status)
+		return nil, fmt.Errorf("acme login failed. Account status is %s", account.Status)
+	} else {
+		log.Infof("Successfully logged in as %s", account.URI)
+	}
 
 	return client, err
 }
@@ -44,12 +51,18 @@ func registerAccount(ctx context.Context, accountFile string, acmeDirectory stri
 	}
 
 	client := newClient(akey, acmeDirectory)
-	_, err = client.Register(ctx, &acme.Account{}, acme.AcceptTOS)
+	account, err := client.Register(ctx, &acme.Account{}, acme.AcceptTOS)
 	if err != nil {
 		return nil, err
 	}
 
-	err = common.SaveToPEMFile(accountFile, akey, nil)
+	if account.Status != "valid" {
+		log.Warnf("ACME registration failed failed. Retruned Account URI %s and Status %s", account.URI, account.Status)
+	} else {
+		log.Infof("Successfully registered account as %s", account.URI)
+	}
+
+	err = common.SaveToPEMFile(accountFile, akey, nil, "ACME Account URI: "+account.URI)
 	if err != nil {
 		return nil, err
 	}

@@ -18,7 +18,7 @@ const (
 )
 
 // SaveToPEMFile saves certiceates and key pem encoded to a file
-func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error {
+func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte, note string) error {
 	// if file already exists rotate the old file
 	if _, err := os.Stat(filename); err == nil {
 		name, extension := "", ""
@@ -39,7 +39,7 @@ func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error
 		}
 	}
 
-	fileData, err := EncodePem(key, certs)
+	fileData, err := EncodePem(key, certs, note)
 	if err != nil {
 		return err
 	}
@@ -47,8 +47,13 @@ func SaveToPEMFile(filename string, key *ecdsa.PrivateKey, certs [][]byte) error
 }
 
 // EncodePem encodes certificates and key in PEM format
-func EncodePem(key *ecdsa.PrivateKey, certs [][]byte) ([]byte, error) {
+func EncodePem(key *ecdsa.PrivateKey, certs [][]byte, note string) ([]byte, error) {
 	var buf bytes.Buffer
+
+	if note != "" {
+		buf.WriteString(note)
+		buf.WriteString("\n")
+	}
 
 	for _, cert := range certs {
 		err := pem.Encode(&buf, &pem.Block{
@@ -144,16 +149,16 @@ func FlattenStringSlice(stringSlice []string) string {
 // When singleFile is true, cert and key are bothes stored in certFile, otherwise they are stored in two separate files
 func WriteCertToFile(certs [][]byte, key *ecdsa.PrivateKey, certFile, keyFile string, singleFile bool) error {
 	if singleFile {
-		err := SaveToPEMFile(certFile, key, certs)
+		err := SaveToPEMFile(certFile, key, certs, "")
 		if err != nil {
 			return err
 		}
 	} else {
-		err := SaveToPEMFile(certFile, nil, certs)
+		err := SaveToPEMFile(certFile, nil, certs, "")
 		if err != nil {
 			return err
 		}
-		err = SaveToPEMFile(keyFile, key, nil)
+		err = SaveToPEMFile(keyFile, key, nil, "")
 		if err != nil {
 			return err
 		}
