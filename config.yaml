@@ -39,11 +39,23 @@ certificate:
     acmedirectory: https://0.0.0.0:14000/dir
 
     # acmeaccountfile specifies the file storing the key pair used as identity against the
-    # acme server. If registeracme is set to true, a new identity will be created and 
-    # registered if the file does not exists or its content cannot be used for any reason
-    # (e.g. content not parsabe as key; key not registered with chosen acme server).
+    # acme server.
     acmeaccountfile: "/etc/certbutler/acmeKey.pem"
+    
+    # If registeracme is set to true, a new identity will be created and registered if the
+    # file does not exists or its content cannot be used for any reason (e.g. content not
+    # parsabe as key; key not registered with chosen acme server).
     registeracme: true
+
+    # acmecontact lists mail addresses to be included in a newly created ACME account. The
+    # inclusion of contact addresses is optional. This paramter is only used on registration.
+    # When using an exiting account it is ignored.
+    acmemailcontacts: ["mail@example.com"]
+
+    # acceptacmetos has to be set to true to accept the Terms of Service of the ACME endpoint.
+    # Without accepting the Terms of Service, no account will be registered. To read the TOS
+    # before accepting, run once with false. The TOS URL will be printed in the output. 
+    acceptacmetos: true
 
 # OUTPUT FILES CONFIGURATION
 files:

@@ -21,12 +21,14 @@ type TimingConfiguration struct {
 
 // CertificateConfiguration stores Certificate content ACME account data
 type CertificateConfiguration struct {
-	DNSNames        []string
-	EllipticCurve   string
-	MustStaple      bool
-	AcmeDirectory   string
-	AcmeAccountFile string
-	RegisterAcme    bool
+	DNSNames         []string
+	EllipticCurve    string
+	MustStaple       bool
+	AcmeDirectory    string
+	AcmeAccountFile  string
+	RegisterAcme     bool
+	AcceptAcmeTOS    bool
+	AcmeMailContacts []string
 }
 
 // FilesConfiguration stores how received content to files
