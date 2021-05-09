@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"felix-hartmond.de/projects/certbutler/acme"
+	"felix-hartmond.de/projects/certbutler/common"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +63,12 @@ var testCmd = &cobra.Command{
 This command tries to login at the ACME provider and prints all details about the ACME account.
 It can be used to test the configuration without issuring a certificate.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("account test command config:%s\n", configFile)
+		config, err := common.LoadConfig(configFile)
+		if err != nil {
+			fmt.Printf("Config file could not be loaded: %s\n", err)
+			os.Exit(1)
+		}
+		acme.TestAccount(config.Certificate.AcmeAccountFile, config.Certificate.AcmeDirectory)
 	},
 }
 

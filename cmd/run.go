@@ -2,13 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/scheduler"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -40,13 +38,7 @@ To run multiple configurations, provide the config paramter multiple times.
 		configs := []common.Config{}
 		for _, filename := range configFiles {
 			log.Printf("Parsing config: %s", filename)
-			yamlBytes, err := ioutil.ReadFile(filename)
-			if err != nil {
-				panic(err)
-			}
-
-			var config common.Config
-			err = yaml.Unmarshal(yamlBytes, &config)
+			config, err := common.LoadConfig(filename)
 			if err != nil {
 				panic(err)
 			}
