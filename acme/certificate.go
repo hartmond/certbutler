@@ -17,40 +17,13 @@ import (
 	"golang.org/x/crypto/acme"
 )
 
-func newClient(akey *ecdsa.PrivateKey, acmeDirectory string) *acme.Client {
-	return &acme.Client{
-		Key:          akey,
-		DirectoryURL: acmeDirectory,
-		UserAgent:    "CertButler/v0.2-dev",
-	}
-}
-
-func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) (*acme.Client, error) {
-	akey, err := common.LoadKeyFromPEMFile(accountFile, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	client := newClient(akey, acmeDirectory)
-	account, err := client.GetReg(ctx, "")
-
-	if account.Status != "valid" {
-		log.Warnf("ACME login failed. Status of Account %s is %s", account.URI, account.Status)
-		return nil, fmt.Errorf("acme login failed. Account status is %s", account.Status)
-	} else {
-		log.Infof("Successfully logged in as %s", account.URI)
-	}
-
-	return client, err
-}
-
 // RequestCertificate runs the acme flow to request a certificate with the desired contents
 func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]byte, *ecdsa.PrivateKey, error) {
 	ctx := context.Background()
 	var client *acme.Client
 	var err error
 
-	client, err = loadAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory)
+	client, _, err = loadAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory)
 	if err != nil {
 		if !certificateConfig.RegisterAcme {
 			return nil, nil, err

@@ -91,6 +91,11 @@ var updateCmd = &cobra.Command{
 Account configuration is taken from the acmeaccount section of a config file.
 The command will update the contact addresses and print all info about the account afterwards.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("account update command config:%s\n", configFile)
+		config, err := common.LoadConfig(configFile)
+		if err != nil {
+			fmt.Printf("Config file could not be loaded: %s\n", err)
+			os.Exit(1)
+		}
+		acme.UpdateAccount(config.Certificate.AcmeAccountFile, config.Certificate.AcmeDirectory, config.Certificate.AcmeMailContacts)
 	},
 }
