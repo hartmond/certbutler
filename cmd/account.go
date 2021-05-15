@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"felix-hartmond.de/projects/certbutler/acme"
 	"felix-hartmond.de/projects/certbutler/common"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -52,15 +52,14 @@ Account details is taken from the acmeaccount section of a config file.
 Acceptance of the server's terms of service can be given interactively or via command line flag.
 The command will abort if the account file already exists (unless forced).`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("account register command config:%s tos:%t overwrite:%t\n", configFile, acceptTOS, overwriteFile)
 		config, err := common.LoadConfig(configFile)
 		if err != nil {
-			fmt.Printf("Config file could not be loaded: %s\n", err)
+			log.Errorf("Config file could not be loaded: %s\n", err)
 			os.Exit(1)
 		}
 		_, err = acme.RegisterAccount(context.Background(), config.Certificate.AcmeAccountFile, config.Certificate.AcmeDirectory, config.Certificate.AcmeMailContacts, acceptTOS || config.Certificate.AcceptAcmeTOS)
 		if err != nil {
-			fmt.Printf("Could not register account: %s\n", err)
+			log.Errorf("Could not register account: %s\n", err)
 			os.Exit(1)
 		}
 	},
@@ -76,7 +75,7 @@ It can be used to test the configuration without issuring a certificate.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := common.LoadConfig(configFile)
 		if err != nil {
-			fmt.Printf("Config file could not be loaded: %s\n", err)
+			log.Errorf("Config file could not be loaded: %s\n", err)
 			os.Exit(1)
 		}
 		acme.TestAccount(config.Certificate.AcmeAccountFile, config.Certificate.AcmeDirectory)
@@ -93,7 +92,7 @@ The command will update the contact addresses and print all info about the accou
 	Run: func(cmd *cobra.Command, args []string) {
 		config, err := common.LoadConfig(configFile)
 		if err != nil {
-			fmt.Printf("Config file could not be loaded: %s\n", err)
+			log.Errorf("Config file could not be loaded: %s\n", err)
 			os.Exit(1)
 		}
 		acme.UpdateAccount(config.Certificate.AcmeAccountFile, config.Certificate.AcmeDirectory, config.Certificate.AcmeMailContacts)

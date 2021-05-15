@@ -92,9 +92,10 @@ func RegisterAccount(ctx context.Context, accountFile string, acmeDirectory stri
 
 	if account.Status != "valid" {
 		log.Warnf("ACME registration failed failed. Retruned Account URI %s and Status %s", account.URI, account.Status)
-	} else {
-		log.Infof("Successfully registered account. Account id is %s", account.URI)
+		return nil, fmt.Errorf("registered account is not valid")
 	}
+
+	log.Infof("Successfully registered account. Account id is %s", account.URI)
 
 	err = common.SaveToPEMFile(accountFile, akey, nil, fmt.Sprintf("ACME Account URI: %s\nAccepted TOS: %s\nContact addresses: %s", account.URI, tosURL, mailContacts))
 	if err != nil {
