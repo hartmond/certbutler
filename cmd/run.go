@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 
 	"felix-hartmond.de/projects/certbutler/common"
 	"felix-hartmond.de/projects/certbutler/scheduler"
@@ -33,8 +32,6 @@ Thereby, collisions of listening to the dns port of concurrent runs cannot happe
 To run multiple configurations, provide the config paramter multiple times.
 (e.g. certbutler run -c a.yaml -c b.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("run command configs:%s oneshot:%t\n", configFiles, oneShot)
-
 		configs := []common.Config{}
 		for _, filename := range configFiles {
 			log.Printf("Parsing config: %s", filename)
@@ -45,6 +42,6 @@ To run multiple configurations, provide the config paramter multiple times.
 			configs = append(configs, config)
 		}
 
-		scheduler.RunConfig(configs)
+		scheduler.RunConfig(configs, oneShot)
 	},
 }

@@ -15,7 +15,7 @@ import (
 )
 
 // RunConfig starts cerbutler tasked based on a configuration
-func RunConfig(configs []common.Config) {
+func RunConfig(configs []common.Config, oneShot bool) {
 	wg := &sync.WaitGroup{}
 
 	for _, config := range configs {
@@ -29,7 +29,7 @@ func RunConfig(configs []common.Config) {
 			log.Warn("Nginx post-processor is enabled but certificate and key are stored in one combined file. This combination usually does not work.")
 		}
 
-		if config.Timing.RunIntervalMinutes == 0 {
+		if oneShot || config.Timing.RunIntervalMinutes == 0 {
 			wg.Add(1)
 			go func() {
 				process(c)
