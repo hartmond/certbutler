@@ -44,41 +44,6 @@ func loadAccount(ctx context.Context, accountFile string, acmeDirectory string) 
 	return client, err
 }
 
-func registerAccount(ctx context.Context, accountFile string, acmeDirectory string, mailContacts []string, acceptTOS bool) (*acme.Client, error) {
-	akey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, err
-	}
-
-	var tosURL string
-	contacts := []string{}
-	for _, mail := range mailContacts {
-		contacts = append(contacts, "mailto:"+mail)
-	}
-	client := newClient(akey, acmeDirectory)
-	account, err := client.Register(ctx, &acme.Account{Contact: contacts}, func(url string) bool {
-		tosURL = url
-		log.Infof("Terms of Service of ACME endpoint: %s", tosURL)
-		log.Infof("Answering Accept=%t as specified in config file", acceptTOS)
-		return acceptTOS
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if account.Status != "valid" {
-		log.Warnf("ACME registration failed failed. Retruned Account URI %s and Status %s", account.URI, account.Status)
-	} else {
-		log.Infof("Successfully registered account as %s", account.URI)
-	}
-
-	err = common.SaveToPEMFile(accountFile, akey, nil, "ACME Account URI: "+account.URI+"\nAccepted TOS: "+tosURL)
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
 // RequestCertificate runs the acme flow to request a certificate with the desired contents
 func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]byte, *ecdsa.PrivateKey, error) {
 	ctx := context.Background()
@@ -90,7 +55,7 @@ func RequestCertificate(certificateConfig common.CertificateConfiguration) ([][]
 		if !certificateConfig.RegisterAcme {
 			return nil, nil, err
 		}
-		client, err = registerAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory, certificateConfig.AcmeMailContacts, certificateConfig.AcceptAcmeTOS)
+		client, err = RegisterAccount(ctx, certificateConfig.AcmeAccountFile, certificateConfig.AcmeDirectory, certificateConfig.AcmeMailContacts, certificateConfig.AcceptAcmeTOS)
 		if err != nil {
 			return nil, nil, err
 		}

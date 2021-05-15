@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -52,6 +53,16 @@ Acceptance of the server's terms of service can be given interactively or via co
 The command will abort if the account file already exists (unless forced).`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("account register command config:%s tos:%t overwrite:%t\n", configFile, acceptTOS, overwriteFile)
+		config, err := common.LoadConfig(configFile)
+		if err != nil {
+			fmt.Printf("Config file could not be loaded: %s\n", err)
+			os.Exit(1)
+		}
+		_, err = acme.RegisterAccount(context.Background(), config.Certificate.AcmeAccountFile, config.Certificate.AcmeDirectory, config.Certificate.AcmeMailContacts, acceptTOS || config.Certificate.AcceptAcmeTOS)
+		if err != nil {
+			fmt.Printf("Could not register account: %s\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
