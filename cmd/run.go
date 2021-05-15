@@ -37,7 +37,8 @@ To run multiple configurations, provide the config paramter multiple times.
 			log.Printf("Parsing config: %s", filename)
 			config, err := common.LoadConfig(filename)
 			if err != nil {
-				panic(err)
+				log.Errorf("Could not parse config file %s: %s", filename, err)
+				return
 			}
 			configs = append(configs, config)
 		}
